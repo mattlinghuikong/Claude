@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>全球股票研究报告 — {{ report_date }}</title>
+  <style>
+    :root {
+      --primary: #1a3a5c;
+      --accent:  #e8a020;
+      --cn:      #d32f2f;
+      --hk:      #7b1fa2;
+      --us:      #1565c0;
+      --bg:      #f5f7fa;
+      --card:    #ffffff;
+      --border:  #dde3ec;
+      --text:    #212529;
+      --muted:   #6c757d;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+           background: var(--bg); color: var(--text); line-height: 1.6; }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, var(--primary) 0%, #0d2238 100%);
+      color: #fff; padding: 48px 40px 36px;
+    }
+    header h1 { font-size: 2rem; font-weight: 700; letter-spacing: 1px; }
+    header p  { margin-top: 8px; opacity: .75; font-size: .95rem; }
+    .meta-badges { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+    .badge {
+      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25);
+      border-radius: 20px; padding: 4px 16px; font-size: .8rem;
+    }
+
+    /* ── Layout ── */
+    main { max-width: 1100px; margin: 0 auto; padding: 32px 24px 64px; }
+    section { margin-bottom: 40px; }
+    h2 {
+      font-size: 1.25rem; font-weight: 700; color: var(--primary);
+      border-left: 4px solid var(--accent); padding-left: 12px;
+      margin-bottom: 20px;
+    }
+    h3 { font-size: 1rem; font-weight: 600; color: var(--primary); margin-bottom: 10px; }
+
+    /* ── Analyst summary cards ── */
+    .analyst-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .analyst-card {
+      background: var(--card); border-radius: 10px; border: 1px solid var(--border);
+      padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,.04);
+    }
+    .analyst-card .market-tag {
+      display: inline-block; border-radius: 4px; padding: 2px 10px;
+      font-size: .75rem; font-weight: 700; color: #fff; margin-bottom: 10px;
+    }
+    .market-CN { background: var(--cn); }
+    .market-HK { background: var(--hk); }
+    .market-US { background: var(--us); }
+
+    .analyst-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    .analyst-table th {
+      background: #f0f4f9; text-align: left; padding: 8px 10px;
+      border-bottom: 2px solid var(--border); color: var(--primary);
+    }
+    .analyst-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+    .analyst-table tr:last-child td { border-bottom: none; }
+    .win-rate { font-weight: 700; color: #1b7b34; }
+
+    /* ── AI summary box ── */
+    .ai-box {
+      background: #fff9f0; border: 1px solid #f5d49a; border-radius: 10px;
+      padding: 20px 24px; font-size: .92rem; white-space: pre-wrap;
+    }
+
+    /* ── Top 10 stock cards ── */
+    .stock-grid { display: grid; gap: 24px; }
+    .stock-card {
+      background: var(--card); border-radius: 12px; border: 1px solid var(--border);
+      padding: 24px; box-shadow: 0 3px 10px rgba(0,0,0,.05);
+      display: grid; grid-template-columns: auto 1fr; gap: 0 24px;
+    }
+    .rank-badge {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--primary); color: #fff;
+      font-size: 1.4rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .rank-1 { background: #c9a227; }
+    .rank-2 { background: #9e9e9e; }
+    .rank-3 { background: #8d4e2a; }
+
+    .stock-header { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .stock-name { font-size: 1.15rem; font-weight: 700; color: var(--primary); }
+    .stock-ticker { font-size: .9rem; color: var(--muted); }
+    .stock-meta { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+    .chip {
+      background: #eef2f8; border-radius: 20px; padding: 3px 12px;
+      font-size: .78rem; color: var(--primary);
+    }
+    .chip strong { font-weight: 700; }
+    .thesis { font-size: .9rem; margin-top: 12px; white-space: pre-wrap; }
+
+    /* ── Score bar ── */
+    .score-bar-wrap { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+    .score-bar-bg { flex: 1; height: 6px; background: #e0e7ef; border-radius: 3px; }
+    .score-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); }
+    .score-val { font-size: .8rem; font-weight: 700; color: var(--accent); min-width: 36px; }
+
+    /* ── Portfolio summary ── */
+    .portfolio-box {
+      background: linear-gradient(135deg, #1a3a5c11, #e8a02011);
+      border: 1px solid #c8d8e8; border-radius: 10px;
+      padding: 24px; font-size: .92rem; white-space: pre-wrap;
+    }
+
+    /* ── Disclaimer ── */
+    .disclaimer {
+      margin-top: 40px; padding: 16px 20px;
+      background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px;
+      font-size: .8rem; color: #555;
+    }
+
+    footer { text-align: center; padding: 24px; color: var(--muted); font-size: .8rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>全球股票研究报告</h1>
+  <p>基于 A股 · 港股 · 美股 三大市场胜率最高分析师筛选</p>
+  <div class="meta-badges">
+    <span class="badge">报告日期：{{ report_date }}</span>
+    <span class="badge">分析师总数：{{ total_analysts }}</span>
+    <span class="badge">覆盖市场：A股 / 港股 / 美股</span>
+    <span class="badge">最终推荐：前 {{ top_n }} 只股票</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ① Analyst landscape -->
+  <section id="analysts">
+    <h2>一、各市场顶级分析师概况</h2>
+    <div class="analyst-grid">
+
+      {% for market_label, analysts in analyst_tables.items() %}
+      <div class="analyst-card">
+        <span class="market-tag market-{{ market_label }}">{{ market_names[market_label] }}</span>
+        <table class="analyst-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>分析师</th>
+              <th>所属机构</th>
+              <th>胜率</th>
+              <th>超额收益</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in analysts %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ row.analyst_name }}</td>
+              <td>{{ row.broker }}</td>
+              <td class="win-rate">{{ "%.1f"|format(row.win_rate) }}%</td>
+              <td>{{ "%.1f"|format(row.excess_return) }}%</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endfor %}
+
+    </div>
+
+    {% if analyst_summary %}
+    <div style="margin-top: 20px;">
+      <h3>AI 分析师市场洞察</h3>
+      <div class="ai-box">{{ analyst_summary }}</div>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- ② Top 10 stocks -->
+  <section id="top-stocks">
+    <h2>二、最值得买入的 {{ top_n }} 只股票</h2>
+    <div class="stock-grid">
+      {% for stock in top_stocks %}
+      <div class="stock-card">
+        <div class="rank-badge rank-{{ loop.index }}">{{ loop.index }}</div>
+        <div>
+          <div class="stock-header">
+            <span class="stock-name">{{ stock.name }}</span>
+            <span class="stock-ticker">{{ stock.ticker }}</span>
+            <span class="market-tag market-{{ stock.market_label }}" style="margin:0;">
+              {{ market_names[stock.market_label] }}
+            </span>
+          </div>
+          <div class="stock-meta">
+            {% if stock.sector %}
+            <span class="chip">行业：<strong>{{ stock.sector }}</strong></span>
+            {% endif %}
+            {% if stock.target_price %}
+            <span class="chip">目标价：<strong>{{ stock.target_price }}</strong></span>
+            {% endif %}
+            {% if stock.analyst_count %}
+            <span class="chip">覆盖分析师：<strong>{{ stock.analyst_count|int }}</strong></span>
+            {% endif %}
+            {% if stock.analyst_win_rate %}
+            <span class="chip">分析师胜率：<strong>{{ "%.1f"|format(stock.analyst_win_rate) }}%</strong></span>
+            {% endif %}
+            {% if stock.analyst_excess_return %}
+            <span class="chip">超额收益：<strong>{{ "%.1f"|format(stock.analyst_excess_return) }}%</strong></span>
+            {% endif %}
+          </div>
+          <div class="score-bar-wrap">
+            <span style="font-size:.8rem;color:var(--muted);">综合评分</span>
+            <div class="score-bar-bg">
+              <div class="score-bar-fill" style="width:{{ (stock.global_score * 100)|int }}%;"></div>
+            </div>
+            <span class="score-val">{{ "%.0f"|format(stock.global_score * 100) }}</span>
+          </div>
+          {% if stock.thesis %}
+          <div class="thesis">{{ stock.thesis }}</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ③ Portfolio summary -->
+  {% if portfolio_summary %}
+  <section id="portfolio">
+    <h2>三、组合投资逻辑总结</h2>
+    <div class="portfolio-box">{{ portfolio_summary }}</div>
+  </section>
+  {% endif %}
+
+  <div class="disclaimer">
+    <strong>免责声明：</strong>本报告由程序自动生成，仅供参考，不构成投资建议。
+    股市有风险，投资需谨慎。历史胜率不代表未来表现，请结合自身风险承受能力做出投资决策。
+  </div>
+
+</main>
+
+<footer>
+  Generated by StockResearchBot &nbsp;|&nbsp; Powered by Claude AI &nbsp;|&nbsp; {{ report_date }}
+</footer>
+
+</body>
+</html>

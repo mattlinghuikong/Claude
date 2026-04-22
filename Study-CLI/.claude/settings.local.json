@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip3 install *)",
+      "WebSearch",
+      "Bash(python3 *)",
+      "Bash(grep -v \"^$\")",
+      "Bash(/opt/homebrew/bin/python3 *)",
+      "Bash(pkill -f \"bgfnrzwra\\\\|stock_research_report\")",
+      "Bash(pkill -f \"b2hpr2lmj\")",
+      "Bash(open *)",
+      "Bash(kill %1)",
+      "Bash(wait)"
+    ]
+  }
+}

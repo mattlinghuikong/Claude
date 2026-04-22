@@ -1,0 +1,1256 @@
+
+**********************************************************************
+  DAILY ANALYST STOCK REPORT  —  2026-04-21
+**********************************************************************
+
+  FREE DATA SOURCES USED:
+    • Yahoo Finance (yfinance)     — US & HK price/consensus/targets
+    • Eastmoney 东方财富 (akshare)  — CN analyst rankings, fund flows,
+                                      research reports, HK coverage
+    • Xueqiu 雪球 (akshare)         — CN/HK social sentiment & hot stocks
+    • Finviz                        — US analyst upgrade/downgrade feed
+    • FMP (if key set)              — US/HK analyst grades & estimates
+    • CNINF 巨潮资讯 (akshare)      — Official SSE/SZSE company filings
+
+  DISCLAIMER: Auto-generated from public data. Not investment advice.
+
+======================================================================
+  US EQUITIES  —  Top Analyst Picks (NYSE / NASDAQ)
+======================================================================
+
+#1  NOW  —  ServiceNow, Inc.
+    Sector / Industry : Technology / Software - Application
+    Current Price     : $99.72
+    Analyst Target    : $168.65  (high: $260.00)
+    Upside to Target  : +69.1%
+    Consensus         : Strong Buy  (41 analysts)
+    Market Cap        : $104.3B
+
+    FUNDAMENTALS
+      Trailing P/E      : 59.7x
+      Forward P/E       : 19.9x
+      Forward EPS       : $5.02
+      Revenue Growth    : +20.7%
+      Earnings Growth   : +3.4%
+      Profit Margin     : +13.2%
+      Return on Equity  : +15.5%
+      Debt / Equity     : 18.5
+      52-Week Range     : $81.24 — $211.48
+
+    RECENT ANALYST ACTIVITY (last 30 days)
+      2026-04-20  BTIG  →  Reit from Buy to Buy
+      2026-04-16  Deutsche Bank  →  Maintained from Buy to Buy
+      2026-04-16  TD Cowen  →  Maintained from Buy to Buy
+      2026-04-16  Baird  →  Maintained from Outperform to Outperform
+      2026-04-15  Citigroup  →  Maintained from Buy to Buy
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 69% upside to consensus target — significant re-rating potential.
+      • Strong Buy consensus across 41 analysts — high conviction across the street.
+      • Multiple recent upgrades (Deutsche Bank, TD Cowen, BTIG) — positive momentum shift.
+      • Revenue growing at 21% YoY — above-market top-line expansion.
+      • Forward P/E of 19.9x is significantly below trailing P/E — earnings acceleration expected.
+      • Trading 53% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      ServiceNow, Inc. provides cloud-based solution for digital
+      workflows in the North America, Europe, the Middle East and
+      Africa, Asia Pacific, and internationally. The company
+      provides asset management, integrated risk management, IT
+      service management, Operational Technology management,
+      Security Oper
+
+    ------------------------------------------------------------
+
+#2  AMZN  —  Amazon.com, Inc.
+    Sector / Industry : Consumer Cyclical / Internet Retail
+    Current Price     : $248.28
+    Analyst Target    : $281.18  (high: $360.00)
+    Upside to Target  : +13.3%
+    Consensus         : Strong Buy  (64 analysts)
+    Market Cap        : $2670.1B
+
+    FUNDAMENTALS
+      Trailing P/E      : 34.6x
+      Forward P/E       : 26.3x
+      Forward EPS       : $9.43
+      Revenue Growth    : +13.6%
+      Earnings Growth   : +5.0%
+      Profit Margin     : +10.8%
+      Return on Equity  : +22.3%
+      Debt / Equity     : 43.4
+      52-Week Range     : $169.35 — $258.60
+
+    RECENT ANALYST ACTIVITY (last 30 days)
+      2026-04-20  Keybanc  →  Maintained from Overweight to Overweight
+      2026-04-20  B of A Securities  →  Maintained from Buy to Buy
+      2026-04-17  Truist Securities  →  Maintained from Buy to Buy
+      2026-04-16  TD Cowen  →  Reit from Buy to Buy
+      2026-04-15  Citizens  →  Reit from Market Outperform to Market Outperform
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Strong Buy consensus across 64 analysts — high conviction across the street.
+      • Multiple recent upgrades (Keybanc, B of A Securities, Truist Securities) — positive momentum shift.
+      • Solid 14% revenue growth supports earnings trajectory.
+      • Return on equity of 22% — efficient capital allocation.
+      • Forward P/E of 26.3x is significantly below trailing P/E — earnings acceleration expected.
+
+    BUSINESS
+      Amazon.com, Inc. engages in the retail sale of consumer
+      products, advertising, and subscriptions service through
+      online and physical stores in North America and
+      internationally. The company operates through three
+      segments: North America, International, and Amazon Web
+      Services (AWS). It also manufact
+
+    ------------------------------------------------------------
+
+#3  MSFT  —  Microsoft Corporation
+    Sector / Industry : Technology / Software - Infrastructure
+    Current Price     : $418.07
+    Analyst Target    : $579.57  (high: $730.00)
+    Upside to Target  : +38.6%
+    Consensus         : Strong Buy  (54 analysts)
+    Market Cap        : $3107.3B
+
+    FUNDAMENTALS
+      Trailing P/E      : 26.2x
+      Forward P/E       : 22.1x
+      Forward EPS       : $18.91
+      Revenue Growth    : +16.7%
+      Earnings Growth   : +59.8%
+      Profit Margin     : +39.0%
+      Return on Equity  : +34.4%
+      Debt / Equity     : 31.5
+      52-Week Range     : $356.28 — $555.45
+
+    RECENT ANALYST ACTIVITY (last 30 days)
+      2026-04-16  TD Cowen  →  Maintained from Buy to Buy
+      2026-04-15  Baird  →  Maintained from Outperform to Outperform
+      2026-04-14  Mizuho  →  Maintained from Outperform to Outperform
+      2026-04-14  Piper Sandler  →  Maintained from Overweight to Overweight
+      2026-04-10  BNP Paribas  →  Maintained from Outperform to Outperform
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 39% upside to consensus target — significant re-rating potential.
+      • Strong Buy consensus across 54 analysts — high conviction across the street.
+      • Multiple recent upgrades (Mizuho, Baird, TD Cowen) — positive momentum shift.
+      • Solid 17% revenue growth supports earnings trajectory.
+      • Earnings growing at 60% YoY — strong EPS leverage.
+      • High-quality business: 39% net profit margin.
+      • Return on equity of 34% — efficient capital allocation.
+      • Trading 25% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      Microsoft Corporation develops and supports software,
+      services, devices, and solutions worldwide. The Productivity
+      and Business Processes segment offers Microsoft 365
+      commercial, enterprise mobility + security, windows
+      commercial, power BI, exchange, sharepoint, Microsoft teams,
+      security and complia
+
+    ------------------------------------------------------------
+
+#4  SNOW  —  Snowflake Inc.
+    Sector / Industry : Technology / Software - Application
+    Current Price     : $150.44
+    Analyst Target    : $236.61  (high: $500.00)
+    Upside to Target  : +57.3%
+    Consensus         : Strong Buy  (47 analysts)
+    Market Cap        : $52.0B
+
+    FUNDAMENTALS
+      Trailing P/E      : N/A
+      Forward P/E       : 61.8x
+      Forward EPS       : $2.43
+      Revenue Growth    : +30.1%
+      Earnings Growth   : N/A
+      Profit Margin     : -28.4%
+      Return on Equity  : -53.9%
+      Debt / Equity     : 142.5
+      52-Week Range     : $118.30 — $280.67
+
+    RECENT ANALYST ACTIVITY (last 30 days)
+      2026-04-15  Keybanc  →  Maintained from Overweight to Overweight
+      2026-04-14  Evercore ISI Group  →  Maintained from Outperform to Outperform
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 57% upside to consensus target — significant re-rating potential.
+      • Strong Buy consensus across 47 analysts — high conviction across the street.
+      • Recent upgrade by Keybanc to Overweight (2026-04-15).
+      • Revenue growing at 30% YoY — above-market top-line expansion.
+      • Trading 46% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      Snowflake Inc. provides a cloud-based data platform for
+      various organizations in the United States and
+      internationally. The company's platform includes artificial
+      intelligence (AI) Data Cloud, which enables customers to
+      consolidate data into a single source of truth to drive
+      meaningful business insi
+
+    ------------------------------------------------------------
+
+#5  GOOGL  —  Alphabet Inc.
+    Sector / Industry : Communication Services / Internet Content & Information
+    Current Price     : $337.42
+    Analyst Target    : $376.50  (high: $443.00)
+    Upside to Target  : +11.6%
+    Consensus         : Strong Buy  (56 analysts)
+    Market Cap        : $4081.8B
+
+    FUNDAMENTALS
+      Trailing P/E      : 31.2x
+      Forward P/E       : 25.0x
+      Forward EPS       : $13.48
+      Revenue Growth    : +18.0%
+      Earnings Growth   : +31.1%
+      Profit Margin     : +32.8%
+      Return on Equity  : +35.7%
+      Debt / Equity     : 16.1
+      52-Week Range     : $147.84 — $349.00
+
+    RECENT ANALYST ACTIVITY (last 30 days)
+      2026-04-20  Keybanc  →  Maintained from Overweight to Overweight
+      2026-04-14  Citigroup  →  Maintained from Buy to Buy
+      2026-04-13  Stifel  →  Maintained from Buy to Buy
+      2026-04-13  Citizens  →  Reit from Market Outperform to Market Outperform
+      2026-04-08  Cantor Fitzgerald  →  Reit from Overweight to Overweight
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Strong Buy consensus across 56 analysts — high conviction across the street.
+      • Multiple recent upgrades (Keybanc, Stifel, Citigroup) — positive momentum shift.
+      • Solid 18% revenue growth supports earnings trajectory.
+      • Earnings growing at 31% YoY — strong EPS leverage.
+      • High-quality business: 33% net profit margin.
+      • Return on equity of 36% — efficient capital allocation.
+
+    BUSINESS
+      Alphabet Inc. offers various products and platforms in the
+      United States, Europe, the Middle East, Africa, the
+      Asia-Pacific, Canada, and Latin America. It operates through
+      Google Services, Google Cloud, and Other Bets segments. The
+      Google Services segment provides products and services,
+      including ad
+
+    ------------------------------------------------------------
+
+#6  BAC  —  Bank of America Corporation
+    Sector / Industry : Financial Services / Banks - Diversified
+    Current Price     : $53.95
+    Analyst Target    : $62.33  (high: $71.00)
+    Upside to Target  : +15.5%
+    Consensus         : Buy  (23 analysts)
+    Market Cap        : $385.5B
+
+    FUNDAMENTALS
+      Trailing P/E      : 13.4x
+      Forward P/E       : 10.7x
+      Forward EPS       : $5.04
+      Revenue Growth    : +11.8%
+      Earnings Growth   : +23.3%
+      Profit Margin     : +29.0%
+      Return on Equity  : +10.6%
+      Debt / Equity     : N/A
+      52-Week Range     : $37.40 — $57.55
+
+    RECENT ANALYST ACTIVITY (last 30 days)
+      2026-04-16  Oppenheimer  →  Maintained from Outperform to Outperform
+      2026-04-16  Evercore ISI Group  →  Maintained from Outperform to Outperform
+      2026-04-16  Truist Securities  →  Maintained from Buy to Buy
+      2026-04-16  RBC Capital  →  Reit from Outperform to Outperform
+      2026-04-16  Keefe, Bruyette & Woods  →  Maintained from Outperform to Outperform
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analyst consensus target implies 16% upside from current price.
+      • Buy consensus from 23 analysts with aligned bullish price targets.
+      • Multiple recent upgrades (Oppenheimer, Truist Securities, Evercore ISI Group) — positive momentum shift.
+      • Solid 12% revenue growth supports earnings trajectory.
+      • Earnings growing at 23% YoY — strong EPS leverage.
+      • High-quality business: 29% net profit margin.
+      • Forward P/E of 10.7x is significantly below trailing P/E — earnings acceleration expected.
+
+    BUSINESS
+      Bank of America Corporation, through its subsidiaries,
+      provides various financial products and services for
+      individual consumers, small and middle-market businesses,
+      institutional investors, large corporations, and governments
+      worldwide. It operates through four segments: Consumer
+      Banking, Global We
+
+    ------------------------------------------------------------
+
+#7  CRM  —  Salesforce, Inc.
+    Sector / Industry : Technology / Software - Application
+    Current Price     : $186.27
+    Analyst Target    : $268.87  (high: $475.00)
+    Upside to Target  : +44.3%
+    Consensus         : Buy  (52 analysts)
+    Market Cap        : $171.9B
+
+    FUNDAMENTALS
+      Trailing P/E      : 23.9x
+      Forward P/E       : 12.5x
+      Forward EPS       : $14.93
+      Revenue Growth    : +12.1%
+      Earnings Growth   : +17.9%
+      Profit Margin     : +18.0%
+      Return on Equity  : +12.4%
+      Debt / Equity     : 29.9
+      52-Week Range     : $163.52 — $296.05
+
+    RECENT ANALYST ACTIVITY (last 30 days)
+      2026-04-17  BTIG  →  Reit from Buy to Buy
+      2026-04-14  Piper Sandler  →  Maintained from Overweight to Overweight
+      2026-04-01  BTIG  →  Reit from Buy to Buy
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 44% upside to consensus target — significant re-rating potential.
+      • Buy consensus from 52 analysts with aligned bullish price targets.
+      • Multiple recent upgrades (BTIG, Piper Sandler) — positive momentum shift.
+      • Solid 12% revenue growth supports earnings trajectory.
+      • Forward P/E of 12.5x is significantly below trailing P/E — earnings acceleration expected.
+      • Trading 37% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      Salesforce, Inc. provides customer relationship management
+      technology services that connect companies and customers
+      together in the United States, Europe, and the Asia Pacific.
+      The company offers Agentforce, which enables customers to
+      build, deploy, and manage enterprise-grade, autonomous AI
+      agents
+
+    ------------------------------------------------------------
+
+#8  NKE  —  NIKE, Inc.
+    Sector / Industry : Consumer Cyclical / Footwear & Accessories
+    Current Price     : $46.48
+    Analyst Target    : $62.37  (high: $120.00)
+    Upside to Target  : +34.2%
+    Consensus         : Buy  (33 analysts)
+    Market Cap        : $68.8B
+
+    FUNDAMENTALS
+      Trailing P/E      : 30.6x
+      Forward P/E       : 24.7x
+      Forward EPS       : $1.88
+      Revenue Growth    : +0.1%
+      Earnings Growth   : -34.8%
+      Profit Margin     : +4.8%
+      Return on Equity  : +16.0%
+      Debt / Equity     : 79.3
+      52-Week Range     : $42.09 — $80.17
+
+    RECENT ANALYST ACTIVITY (last 30 days)
+      2026-04-01  Barclays  →  Maintained from Overweight to Overweight
+      2026-04-01  Piper Sandler  →  Maintained from Overweight to Overweight
+      2026-04-01  Evercore ISI Group  →  Maintained from Outperform to Outperform
+      2026-04-01  Wells Fargo  →  Maintained from Overweight to Overweight
+      2026-04-01  Truist Securities  →  Maintained from Buy to Buy
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 34% upside to consensus target — significant re-rating potential.
+      • Multiple recent upgrades (Evercore ISI Group, Piper Sandler, Barclays) — positive momentum shift.
+      • Trading 42% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      NIKE, Inc., together with its subsidiaries, designs,
+      develops, markets, and sells athletic and casual footwear,
+      apparel, equipment, accessories, and services for men,
+      women, and kids in North America, Europe, the Middle East,
+      Africa, Greater China, the Asia Pacific, and Latin America.
+      The company of
+
+    ------------------------------------------------------------
+
+#9  NVDA  —  NVIDIA Corporation
+    Sector / Industry : Technology / Semiconductors
+    Current Price     : $202.06
+    Analyst Target    : $268.61  (high: $380.00)
+    Upside to Target  : +32.9%
+    Consensus         : Strong Buy  (56 analysts)
+    Market Cap        : $4911.1B
+
+    FUNDAMENTALS
+      Trailing P/E      : 41.2x
+      Forward P/E       : 18.0x
+      Forward EPS       : $11.24
+      Revenue Growth    : +73.2%
+      Earnings Growth   : +95.6%
+      Profit Margin     : +55.6%
+      Return on Equity  : +101.5%
+      Debt / Equity     : 7.3
+      52-Week Range     : $97.28 — $212.19
+
+    RECENT ANALYST ACTIVITY (last 30 days)
+      2026-03-31  Benchmark  →  Reit from Buy to Buy
+      2026-03-23  Rosenblatt  →  Maintained from Buy to Buy
+      2026-03-23  Cantor Fitzgerald  →  Reit from Overweight to Overweight
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 33% upside to consensus target — significant re-rating potential.
+      • Strong Buy consensus across 56 analysts — high conviction across the street.
+      • Multiple recent upgrades (Benchmark, Cantor Fitzgerald, Rosenblatt) — positive momentum shift.
+      • Revenue growing at 73% YoY — above-market top-line expansion.
+      • Earnings growing at 96% YoY — strong EPS leverage.
+      • High-quality business: 56% net profit margin.
+      • Return on equity of 101% — efficient capital allocation.
+      • Forward P/E of 18.0x is significantly below trailing P/E — earnings acceleration expected.
+
+    BUSINESS
+      NVIDIA Corporation operates as a data center scale AI
+      infrastructure company. The company operates through two
+      segments, Compute & Networking, and Graphics segments. The
+      Compute & Networking segment provides data center
+      accelerated computing and networking platforms and
+      artificial intelligence solut
+
+    ------------------------------------------------------------
+
+#10  MA  —  Mastercard Incorporated
+    Sector / Industry : Financial Services / Credit Services
+    Current Price     : $516.65
+    Analyst Target    : $654.66  (high: $735.00)
+    Upside to Target  : +26.7%
+    Consensus         : Strong Buy  (35 analysts)
+    Market Cap        : $461.1B
+
+    FUNDAMENTALS
+      Trailing P/E      : 31.3x
+      Forward P/E       : 22.8x
+      Forward EPS       : $22.67
+      Revenue Growth    : +17.6%
+      Earnings Growth   : +24.2%
+      Profit Margin     : +45.6%
+      Return on Equity  : +209.9%
+      Debt / Equity     : 256.0
+      52-Week Range     : $480.50 — $601.77
+
+    RECENT ANALYST ACTIVITY (last 30 days)
+      2026-04-14  Citigroup  →  Maintained from Buy to Buy
+      2026-03-31  Loop Capital  →  Initiated to Buy
+      2026-03-31  UBS  →  Maintained from Buy to Buy
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analyst consensus target implies 27% upside from current price.
+      • Strong Buy consensus across 35 analysts — high conviction across the street.
+      • Multiple recent upgrades (Loop Capital, UBS, Citigroup) — positive momentum shift.
+      • Solid 18% revenue growth supports earnings trajectory.
+      • Earnings growing at 24% YoY — strong EPS leverage.
+      • High-quality business: 46% net profit margin.
+      • Return on equity of 210% — efficient capital allocation.
+      • Forward P/E of 22.8x is significantly below trailing P/E — earnings acceleration expected.
+
+    BUSINESS
+      Mastercard Incorporated, a technology company, provides
+      transaction processing and other payment-related products
+      and services in the United States and internationally. The
+      company offers products and services for account holders,
+      merchants, financial institutions, digital partners,
+      businesses, gove
+
+    ------------------------------------------------------------
+
+#11  V  —  Visa Inc.
+    Sector / Industry : Financial Services / Credit Services
+    Current Price     : $313.94
+    Analyst Target    : $393.43  (high: $450.00)
+    Upside to Target  : +25.3%
+    Consensus         : Strong Buy  (35 analysts)
+    Market Cap        : $605.3B
+
+    FUNDAMENTALS
+      Trailing P/E      : 29.5x
+      Forward P/E       : 21.6x
+      Forward EPS       : $14.55
+      Revenue Growth    : +14.6%
+      Earnings Growth   : +17.4%
+      Profit Margin     : +50.2%
+      Return on Equity  : +54.0%
+      Debt / Equity     : 54.6
+      52-Week Range     : $293.89 — $375.51
+
+    RECENT ANALYST ACTIVITY (last 30 days)
+      2026-04-14  Citigroup  →  Maintained from Buy to Buy
+      2026-03-31  Loop Capital  →  Initiated to Buy
+      2026-03-31  UBS  →  Maintained from Buy to Buy
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analyst consensus target implies 25% upside from current price.
+      • Strong Buy consensus across 35 analysts — high conviction across the street.
+      • Multiple recent upgrades (Loop Capital, UBS, Citigroup) — positive momentum shift.
+      • Solid 15% revenue growth supports earnings trajectory.
+      • High-quality business: 50% net profit margin.
+      • Return on equity of 54% — efficient capital allocation.
+      • Forward P/E of 21.6x is significantly below trailing P/E — earnings acceleration expected.
+      • Trading 16% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      Visa Inc. operates as a payment technology company in the
+      United States and internationally. The company operates
+      VisaNet, a transaction processing network that enables
+      authorization, clearing, and settlement of payment
+      transactions. It also offers credit, debit, and prepaid card
+      products; tap to pa
+
+    ------------------------------------------------------------
+
+#12  LLY  —  Eli Lilly and Company
+    Sector / Industry : Healthcare / Drug Manufacturers - General
+    Current Price     : $919.90
+    Analyst Target    : $1,209.86  (high: $1,500.00)
+    Upside to Target  : +31.5%
+    Consensus         : Buy  (29 analysts)
+    Market Cap        : $823.3B
+
+    FUNDAMENTALS
+      Trailing P/E      : 40.0x
+      Forward P/E       : 21.8x
+      Forward EPS       : $42.13
+      Revenue Growth    : +42.6%
+      Earnings Growth   : +51.4%
+      Profit Margin     : +31.7%
+      Return on Equity  : +101.2%
+      Debt / Equity     : 165.3
+      52-Week Range     : $623.78 — $1,133.95
+
+    RECENT ANALYST ACTIVITY (last 30 days)
+      2026-04-10  Morgan Stanley  →  Maintained from Overweight to Overweight
+      2026-04-02  B of A Securities  →  Maintained from Buy to Buy
+      2026-03-30  Guggenheim  →  Maintained from Buy to Buy
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 32% upside to consensus target — significant re-rating potential.
+      • Buy consensus from 29 analysts with aligned bullish price targets.
+      • Multiple recent upgrades (B of A Securities, Guggenheim, Morgan Stanley) — positive momentum shift.
+      • Revenue growing at 43% YoY — above-market top-line expansion.
+      • Earnings growing at 51% YoY — strong EPS leverage.
+      • High-quality business: 32% net profit margin.
+      • Return on equity of 101% — efficient capital allocation.
+      • Forward P/E of 21.8x is significantly below trailing P/E — earnings acceleration expected.
+      • Trading 19% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      Eli Lilly and Company discovers, develops, manufactures, and
+      markets human pharmaceutical products in the United States,
+      Europe, China, Japan, and internationally. The company
+      offers cardiometabolic health products, including Basaglar,
+      Humalog, Humalog Mix 75/25, Humalog U-100, Humalog U-200,
+      Humalo
+
+    ------------------------------------------------------------
+
+#13  XOM  —  Exxon Mobil Corporation
+    Sector / Industry : Energy / Oil & Gas Integrated
+    Current Price     : $147.68
+    Analyst Target    : $164.79  (high: $195.00)
+    Upside to Target  : +11.6%
+    Consensus         : Buy  (24 analysts)
+    Market Cap        : $613.8B
+
+    FUNDAMENTALS
+      Trailing P/E      : 22.0x
+      Forward P/E       : 14.6x
+      Forward EPS       : $10.11
+      Revenue Growth    : -1.3%
+      Earnings Growth   : -11.0%
+      Profit Margin     : +8.9%
+      Return on Equity  : +11.1%
+      Debt / Equity     : 18.9
+      52-Week Range     : $101.19 — $176.41
+
+    RECENT ANALYST ACTIVITY (last 30 days)
+      2026-04-17  BNP Paribas  →  Upgraded from Underperform to Neutral
+      2026-04-17  Morgan Stanley  →  Maintained from Overweight to Overweight
+      2026-04-10  TD Cowen  →  Maintained from Buy to Buy
+      2026-04-09  JP Morgan  →  Maintained from Overweight to Overweight
+      2026-04-09  Piper Sandler  →  Maintained from Overweight to Overweight
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Multiple recent upgrades (BNP Paribas, TD Cowen, Morgan Stanley) — positive momentum shift.
+      • Forward P/E of 14.6x is significantly below trailing P/E — earnings acceleration expected.
+      • Trading 16% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      Exxon Mobil Corporation engages in the exploration and
+      production of crude oil and natural gas in the United
+      States, Canada, and internationally. The company operates
+      through Upstream, Energy Products, Chemical Products, and
+      Specialty Products segments. Its Upstream segment explores
+      for and produces
+
+    ------------------------------------------------------------
+
+#14  COP  —  ConocoPhillips
+    Sector / Industry : Energy / Oil & Gas E&P
+    Current Price     : $116.45
+    Analyst Target    : $137.74  (high: $183.00)
+    Upside to Target  : +18.3%
+    Consensus         : Buy  (27 analysts)
+    Market Cap        : $142.3B
+
+    FUNDAMENTALS
+      Trailing P/E      : 18.3x
+      Forward P/E       : 14.2x
+      Forward EPS       : $8.23
+      Revenue Growth    : -6.8%
+      Earnings Growth   : -39.0%
+      Profit Margin     : +13.3%
+      Return on Equity  : +12.4%
+      Debt / Equity     : 37.8
+      52-Week Range     : $84.28 — $135.87
+
+    RECENT ANALYST ACTIVITY (last 30 days)
+      2026-04-09  Wells Fargo  →  Maintained from Overweight to Overweight
+      2026-04-08  Piper Sandler  →  Maintained from Overweight to Overweight
+      2026-04-02  Citigroup  →  Maintained from Buy to Buy
+      2026-03-27  Morgan Stanley  →  Maintained from Overweight to Overweight
+      2026-03-24  Truist Securities  →  Initiated from Buy to Hold
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analyst consensus target implies 18% upside from current price.
+      • Buy consensus from 27 analysts with aligned bullish price targets.
+      • Multiple recent upgrades (Wells Fargo, Citigroup, Piper Sandler) — positive momentum shift.
+      • Forward P/E of 14.2x is significantly below trailing P/E — earnings acceleration expected.
+
+    BUSINESS
+      ConocoPhillips explores for, produces, transports, and
+      markets crude oil, bitumen, natural gas, liquefied natural
+      gas (LNG), and natural gas liquids. It operates in five
+      segments: Alaska; Lower 48; Canada; Europe, Middle East and
+      North Africa; and Asia Pacific. The company's portfolio
+      includes uncon
+
+    ------------------------------------------------------------
+
+#15  META  —  Meta Platforms, Inc.
+    Sector / Industry : Communication Services / Internet Content & Information
+    Current Price     : $670.91
+    Analyst Target    : $855.76  (high: $1,015.00)
+    Upside to Target  : +27.6%
+    Consensus         : Strong Buy  (60 analysts)
+    Market Cap        : $1703.1B
+
+    FUNDAMENTALS
+      Trailing P/E      : 28.6x
+      Forward P/E       : 18.8x
+      Forward EPS       : $35.62
+      Revenue Growth    : +23.8%
+      Earnings Growth   : +10.7%
+      Profit Margin     : +30.1%
+      Return on Equity  : +30.2%
+      Debt / Equity     : 39.2
+      52-Week Range     : $486.36 — $796.25
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analyst consensus target implies 28% upside from current price.
+      • Strong Buy consensus across 60 analysts — high conviction across the street.
+      • Revenue growing at 24% YoY — above-market top-line expansion.
+      • High-quality business: 30% net profit margin.
+      • Return on equity of 30% — efficient capital allocation.
+      • Forward P/E of 18.8x is significantly below trailing P/E — earnings acceleration expected.
+      • Trading 16% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      Meta Platforms, Inc. engages in the development of products
+      that enable people to connect and share with friends and
+      family through mobile devices, personal computers, virtual
+      reality (VR) headsets, and AI glasses in the United States,
+      Canada, Europe, Asia-Pacific, and internationally. It
+      operates t
+
+    ------------------------------------------------------------
+
+======================================================================
+  HONG KONG  —  Top Analyst Picks (HKEX)
+======================================================================
+
+#1  1177.HK  —  Sino Biopharmaceutical Limited
+    Sector / Industry : Healthcare / Biotechnology
+    Current Price     : HK$5.82
+    Analyst Target    : HK$8.84  (high: HK$10.52)
+    Upside to Target  : +51.8%
+    Consensus         : Strong Buy  (19 analysts)
+    Market Cap        : $104.0B
+
+    FUNDAMENTALS
+      Trailing P/E      : 38.8x
+      Forward P/E       : 18.7x
+      Forward EPS       : HK$0.31
+      Revenue Growth    : +9.8%
+      Earnings Growth   : N/A
+      Profit Margin     : +7.4%
+      Return on Equity  : +12.5%
+      Debt / Equity     : 38.2
+      52-Week Range     : HK$3.67 — HK$9.12
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 52% upside to consensus target — significant re-rating potential.
+      • Strong Buy consensus across 19 analysts — high conviction across the street.
+      • Forward P/E of 18.7x is significantly below trailing P/E — earnings acceleration expected.
+      • Trading 36% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      Sino Biopharmaceutical Limited, an investment holding
+      company, operates as a research and development
+      pharmaceutical conglomerate in the People's Republic of
+      China. It operates through three segments: Modernised
+      Chinese Medicines and Chemical Medicines, Investment, and
+      Others. The company offers onc
+
+    ------------------------------------------------------------
+
+#2  0700.HK  —  Tencent Holdings Limited
+    Sector / Industry : Communication Services / Internet Content & Information
+    Current Price     : HK$519.00
+    Analyst Target    : HK$720.60  (high: HK$887.38)
+    Upside to Target  : +38.8%
+    Consensus         : Strong Buy  (44 analysts)
+    Market Cap        : $4690.2B
+
+    FUNDAMENTALS
+      Trailing P/E      : 18.7x
+      Forward P/E       : 13.3x
+      Forward EPS       : HK$38.98
+      Revenue Growth    : +12.7%
+      Earnings Growth   : +14.1%
+      Profit Margin     : +29.9%
+      Return on Equity  : +20.0%
+      Debt / Equity     : 32.7
+      52-Week Range     : HK$453.20 — HK$683.00
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 39% upside to consensus target — significant re-rating potential.
+      • Strong Buy consensus across 44 analysts — high conviction across the street.
+      • Solid 13% revenue growth supports earnings trajectory.
+      • High-quality business: 30% net profit margin.
+      • Return on equity of 20% — efficient capital allocation.
+      • Forward P/E of 13.3x is significantly below trailing P/E — earnings acceleration expected.
+      • Trading 24% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      Tencent Holdings Limited, an investment holding company,
+      provides value-added services, marketing services, fintech,
+      and business services in Mainland China and internationally.
+      The company's consumers business includes communications and
+      social services, such as instant messaging and social
+      network
+
+    ------------------------------------------------------------
+
+#3  9868.HK  —  XPeng Inc.
+    Sector / Industry : Consumer Cyclical / Auto Manufacturers
+    Current Price     : HK$68.30
+    Analyst Target    : HK$99.77  (high: HK$136.28)
+    Upside to Target  : +46.1%
+    Consensus         : Buy  (25 analysts)
+    Market Cap        : $130.6B
+
+    FUNDAMENTALS
+      Trailing P/E      : N/A
+      Forward P/E       : 35.9x
+      Forward EPS       : HK$1.90
+      Revenue Growth    : +38.2%
+      Earnings Growth   : N/A
+      Profit Margin     : -1.5%
+      Return on Equity  : -3.7%
+      Debt / Equity     : 64.4
+      52-Week Range     : HK$60.35 — HK$110.80
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 46% upside to consensus target — significant re-rating potential.
+      • Buy consensus from 25 analysts with aligned bullish price targets.
+      • Revenue growing at 38% YoY — above-market top-line expansion.
+      • Trading 38% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      XPeng Inc. designs, develops, manufactures, and markets
+      smart electric vehicles (EVs) in the People's Republic of
+      China. The company offers P7 and P7i, a four-door sports
+      sedan; G9, a smart EV and a mid- to large-sized sport
+      utility vehicle (SUV); G7 for families and individual
+      consumers seeking adv
+
+    ------------------------------------------------------------
+
+#4  9988.HK  —  Alibaba Group Holding Limited
+    Sector / Industry : Consumer Cyclical / Internet Retail
+    Current Price     : HK$136.30
+    Analyst Target    : HK$184.83  (high: HK$252.95)
+    Upside to Target  : +35.6%
+    Consensus         : Strong Buy  (28 analysts)
+    Market Cap        : $2608.0B
+
+    FUNDAMENTALS
+      Trailing P/E      : 24.5x
+      Forward P/E       : 17.8x
+      Forward EPS       : HK$7.67
+      Revenue Growth    : +1.7%
+      Earnings Growth   : -70.9%
+      Profit Margin     : +8.9%
+      Return on Equity  : +8.2%
+      Debt / Equity     : 25.9
+      52-Week Range     : HK$101.80 — HK$186.20
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 36% upside to consensus target — significant re-rating potential.
+      • Strong Buy consensus across 28 analysts — high conviction across the street.
+      • Forward P/E of 17.8x is significantly below trailing P/E — earnings acceleration expected.
+      • Trading 27% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      Alibaba Group Holding Limited, through its subsidiaries,
+      provides technology infrastructure and marketing reach to
+      help merchants, brands, retailers, and other businesses to
+      engage with their users and customers in the People's
+      Republic of China and internationally. It operates digital
+      retail platfo
+
+    ------------------------------------------------------------
+
+#5  9999.HK  —  NetEase, Inc.
+    Sector / Industry : Communication Services / Electronic Gaming & Multimedia
+    Current Price     : HK$182.90
+    Analyst Target    : HK$254.91  (high: HK$313.77)
+    Upside to Target  : +39.4%
+    Consensus         : Strong Buy  (22 analysts)
+    Market Cap        : $583.6B
+
+    FUNDAMENTALS
+      Trailing P/E      : 15.2x
+      Forward P/E       : 11.6x
+      Forward EPS       : HK$15.82
+      Revenue Growth    : +3.0%
+      Earnings Growth   : -29.2%
+      Profit Margin     : +30.0%
+      Return on Equity  : +22.6%
+      Debt / Equity     : 4.1
+      52-Week Range     : HK$155.90 — HK$248.00
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 39% upside to consensus target — significant re-rating potential.
+      • Strong Buy consensus across 22 analysts — high conviction across the street.
+      • High-quality business: 30% net profit margin.
+      • Return on equity of 23% — efficient capital allocation.
+      • Forward P/E of 11.6x is significantly below trailing P/E — earnings acceleration expected.
+      • Trading 26% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      NetEase, Inc. engages in online games, music streaming,
+      online intelligent learning services, and internet content
+      services businesses in China and internationally. The
+      company operates through Games and Related Value-Added
+      Services; Youdao; NetEase Cloud Music; and Innovative
+      Businesses and Others
+
+    ------------------------------------------------------------
+
+#6  0027.HK  —  Galaxy Entertainment Group Limited
+    Sector / Industry : Consumer Cyclical / Resorts & Casinos
+    Current Price     : HK$34.84
+    Analyst Target    : HK$48.67  (high: HK$55.40)
+    Upside to Target  : +39.7%
+    Consensus         : Strong Buy  (20 analysts)
+    Market Cap        : $152.6B
+
+    FUNDAMENTALS
+      Trailing P/E      : 14.3x
+      Forward P/E       : 12.5x
+      Forward EPS       : HK$2.79
+      Revenue Growth    : +18.3%
+      Earnings Growth   : +24.2%
+      Profit Margin     : +21.7%
+      Return on Equity  : +13.4%
+      Debt / Equity     : 2.4
+      52-Week Range     : HK$26.70 — HK$44.22
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 40% upside to consensus target — significant re-rating potential.
+      • Strong Buy consensus across 20 analysts — high conviction across the street.
+      • Solid 18% revenue growth supports earnings trajectory.
+      • Earnings growing at 24% YoY — strong EPS leverage.
+      • Reasonable valuation at 12.5x forward earnings.
+      • Trading 21% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      Galaxy Entertainment Group Limited, an investment holding
+      company, engages in the gaming and entertainment businesses
+      in Macau, Hong Kong, and Mainland China. It operates through
+      Gaming and Entertainment, and Construction Materials
+      segments. The company operates casino games of chance or
+      games of ot
+
+    ------------------------------------------------------------
+
+#7  6690.HK  —  Haier Smart Home Co., Ltd.
+    Sector / Industry : Consumer Cyclical / Furnishings, Fixtures & Appliances
+    Current Price     : HK$21.36
+    Analyst Target    : HK$30.64  (high: HK$37.90)
+    Upside to Target  : +43.5%
+    Consensus         : Strong Buy  (18 analysts)
+    Market Cap        : $224.8B
+
+    FUNDAMENTALS
+      Trailing P/E      : 8.9x
+      Forward P/E       : 7.9x
+      Forward EPS       : HK$2.69
+      Revenue Growth    : -6.7%
+      Earnings Growth   : -39.1%
+      Profit Margin     : +6.5%
+      Return on Equity  : +16.5%
+      Debt / Equity     : 33.9
+      52-Week Range     : HK$20.32 — HK$28.20
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 44% upside to consensus target — significant re-rating potential.
+      • Strong Buy consensus across 18 analysts — high conviction across the street.
+      • Reasonable valuation at 7.9x forward earnings.
+      • Trading 24% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      Haier Smart Home Co., Ltd. engages in the research,
+      development, production, and sales of smart home appliances.
+      It operates through five segments: Home Cooking Solutions;
+      Air Energy Solutions; Household Laundry and Care of Washing
+      Machines and Dyers; Whole-Home Water Solutions; and Other
+      Businesses
+
+    ------------------------------------------------------------
+
+#8  1810.HK  —  Xiaomi Corporation
+    Sector / Industry : Technology / Consumer Electronics
+    Current Price     : HK$32.40
+    Analyst Target    : HK$43.97  (high: HK$78.86)
+    Upside to Target  : +35.7%
+    Consensus         : Buy  (30 analysts)
+    Market Cap        : $837.2B
+
+    FUNDAMENTALS
+      Trailing P/E      : 18.1x
+      Forward P/E       : 17.2x
+      Forward EPS       : HK$1.88
+      Revenue Growth    : +7.3%
+      Earnings Growth   : -34.6%
+      Profit Margin     : +9.1%
+      Return on Equity  : +18.2%
+      Debt / Equity     : 13.6
+      52-Week Range     : HK$30.26 — HK$61.45
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 36% upside to consensus target — significant re-rating potential.
+      • Buy consensus from 30 analysts with aligned bullish price targets.
+      • Reasonable valuation at 17.2x forward earnings.
+      • Trading 47% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      Xiaomi Corporation, an investment holding company, engages
+      in the development and sales of smartphones in Mainland
+      China and internationally. It operates through Smartphones,
+      IoT and Lifestyle Products, Internet Services, and Others
+      segments. The company also offers internet of things (IoT)
+      and life
+
+    ------------------------------------------------------------
+
+#9  2318.HK  —  Ping An Insurance (Group) Company of China, Ltd.
+    Sector / Industry : Financial Services / Insurance - Life
+    Current Price     : HK$61.45
+    Analyst Target    : HK$82.97  (high: HK$99.52)
+    Upside to Target  : +35.0%
+    Consensus         : Strong Buy  (16 analysts)
+    Market Cap        : $1220.8B
+
+    FUNDAMENTALS
+      Trailing P/E      : 7.2x
+      Forward P/E       : 5.7x
+      Forward EPS       : HK$10.75
+      Revenue Growth    : -11.0%
+      Earnings Growth   : -74.0%
+      Profit Margin     : +14.1%
+      Return on Equity  : +11.6%
+      Debt / Equity     : 139.7
+      52-Week Range     : HK$43.50 — HK$74.70
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 35% upside to consensus target — significant re-rating potential.
+      • Strong Buy consensus across 16 analysts — high conviction across the street.
+      • Forward P/E of 5.7x is significantly below trailing P/E — earnings acceleration expected.
+      • Trading 18% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      Ping An Insurance (Group) Company of China, Ltd. provides
+      financial products and services in the People's Republic of
+      China. It operates through Life and Health Insurance;
+      Property and Casualty Insurance; Banking; Asset Management;
+      and Finance Enablement segments. The company offers life
+      insurance p
+
+    ------------------------------------------------------------
+
+#10  3690.HK  —  Meituan
+    Sector / Industry : Consumer Cyclical / Internet Retail
+    Current Price     : HK$86.45
+    Analyst Target    : HK$111.86  (high: HK$156.41)
+    Upside to Target  : +29.4%
+    Consensus         : Buy  (35 analysts)
+    Market Cap        : $533.8B
+
+    FUNDAMENTALS
+      Trailing P/E      : N/A
+      Forward P/E       : 16.0x
+      Forward EPS       : HK$5.40
+      Revenue Growth    : +4.1%
+      Earnings Growth   : N/A
+      Profit Margin     : -6.4%
+      Return on Equity  : -14.4%
+      Debt / Equity     : 57.4
+      52-Week Range     : HK$73.60 — HK$149.80
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analyst consensus target implies 29% upside from current price.
+      • Buy consensus from 35 analysts with aligned bullish price targets.
+      • Reasonable valuation at 16.0x forward earnings.
+      • Trading 42% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      Meituan operates as a technology driven retail company in
+      the People's Republic of China, Hong Kong, Macao, Taiwan,
+      and internationally. It operates through Core Local Commerce
+      and New Initiatives segments. The company offers food
+      delivery services; and helps consumers purchase local
+      consumer servic
+
+    ------------------------------------------------------------
+
+#11  9618.HK  —  JD.com, Inc.
+    Sector / Industry : Consumer Cyclical / Internet Retail
+    Current Price     : HK$123.00
+    Analyst Target    : HK$154.11  (high: HK$196.33)
+    Upside to Target  : +25.3%
+    Consensus         : Strong Buy  (24 analysts)
+    Market Cap        : $356.7B
+
+    FUNDAMENTALS
+      Trailing P/E      : 16.6x
+      Forward P/E       : 7.9x
+      Forward EPS       : HK$15.51
+      Revenue Growth    : +1.5%
+      Earnings Growth   : N/A
+      Profit Margin     : +1.5%
+      Return on Equity  : +7.6%
+      Debt / Equity     : 36.5
+      52-Week Range     : HK$95.90 — HK$143.80
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analyst consensus target implies 25% upside from current price.
+      • Strong Buy consensus across 24 analysts — high conviction across the street.
+      • Forward P/E of 7.9x is significantly below trailing P/E — earnings acceleration expected.
+
+    BUSINESS
+      JD.com, Inc. operates as a supply chain-based technology and
+      service provider in the People's Republic of China and
+      Europe. It operates through three segments: JD Retail, JD
+      Logistics, and New Businesses. The company provides home
+      appliances; mobile handsets and other digital products;
+      computers, in
+
+    ------------------------------------------------------------
+
+#12  2269.HK  —  WuXi Biologics (Cayman) Inc.
+    Sector / Industry : Healthcare / Biotechnology
+    Current Price     : HK$35.30
+    Analyst Target    : HK$46.09  (high: HK$77.83)
+    Upside to Target  : +30.6%
+    Consensus         : Buy  (21 analysts)
+    Market Cap        : $145.9B
+
+    FUNDAMENTALS
+      Trailing P/E      : 26.5x
+      Forward P/E       : 18.0x
+      Forward EPS       : HK$1.96
+      Revenue Growth    : +17.2%
+      Earnings Growth   : +39.4%
+      Profit Margin     : +22.5%
+      Return on Equity  : +11.6%
+      Debt / Equity     : 5.9
+      52-Week Range     : HK$20.40 — HK$44.00
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analysts see 31% upside to consensus target — significant re-rating potential.
+      • Buy consensus from 21 analysts with aligned bullish price targets.
+      • Solid 17% revenue growth supports earnings trajectory.
+      • Earnings growing at 39% YoY — strong EPS leverage.
+      • Forward P/E of 18.0x is significantly below trailing P/E — earnings acceleration expected.
+      • Trading 20% below 52-week high — potential mean-reversion opportunity.
+
+    BUSINESS
+      WuXi Biologics (Cayman) Inc., an investment holding company,
+      provides end-to-end solutions and services for biologics
+      discovery, development, and manufacturing for biologics
+      industry in the People's Republic of China, North America,
+      Europe, Singapore, Japan, South Korea, and Australia. It
+      operates t
+
+    ------------------------------------------------------------
+
+#13  1299.HK  —  AIA Group Limited
+    Sector / Industry : Financial Services / Insurance - Life
+    Current Price     : HK$82.80
+    Analyst Target    : HK$103.78  (high: HK$118.96)
+    Upside to Target  : +25.3%
+    Consensus         : Strong Buy  (18 analysts)
+    Market Cap        : $863.3B
+
+    FUNDAMENTALS
+      Trailing P/E      : 17.9x
+      Forward P/E       : 12.4x
+      Forward EPS       : HK$6.68
+      Revenue Growth    : +6.0%
+      Earnings Growth   : +9.4%
+      Profit Margin     : +23.8%
+      Return on Equity  : +14.8%
+      Debt / Equity     : 47.2
+      52-Week Range     : HK$53.60 — HK$92.15
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analyst consensus target implies 25% upside from current price.
+      • Strong Buy consensus across 18 analysts — high conviction across the street.
+      • Forward P/E of 12.4x is significantly below trailing P/E — earnings acceleration expected.
+
+    BUSINESS
+      AIA Group Limited, together with its subsidiaries, provides
+      life insurance based financial services in Hong Kong. The
+      company offers life insurance, accident, and health
+      insurance and savings plans; and employee benefits, credit
+      life, and pension services to corporate clients. It is also
+      involved in
+
+    ------------------------------------------------------------
+
+#14  0388.HK  —  Hong Kong Exchanges and Clearing Limited
+    Sector / Industry : Financial Services / Financial Data & Stock Exchanges
+    Current Price     : HK$417.20
+    Analyst Target    : HK$516.53  (high: HK$610.00)
+    Upside to Target  : +23.8%
+    Consensus         : Strong Buy  (17 analysts)
+    Market Cap        : $527.4B
+
+    FUNDAMENTALS
+      Trailing P/E      : 29.8x
+      Forward P/E       : 27.6x
+      Forward EPS       : HK$15.09
+      Revenue Growth    : +13.8%
+      Earnings Growth   : +15.1%
+      Profit Margin     : +61.5%
+      Return on Equity  : +31.5%
+      Debt / Equity     : 2.1
+      52-Week Range     : HK$328.20 — HK$466.00
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Analyst consensus target implies 24% upside from current price.
+      • Strong Buy consensus across 17 analysts — high conviction across the street.
+      • Solid 14% revenue growth supports earnings trajectory.
+      • High-quality business: 62% net profit margin.
+      • Return on equity of 32% — efficient capital allocation.
+
+    BUSINESS
+      Hong Kong Exchanges and Clearing Limited, together with its
+      subsidiaries, owns and operates stock and futures exchanges,
+      and related clearing houses in Hong Kong, the United
+      Kingdom, and Mainland China. It operates through Cash,
+      Equity and Financial Derivatives, Commodities, and Data and
+      Connectivit
+
+    ------------------------------------------------------------
+
+#15  0175.HK  —  Geely Automobile Holdings Limited
+    Sector / Industry : Consumer Cyclical / Auto Manufacturers
+    Current Price     : HK$24.38
+    Analyst Target    : HK$27.52  (high: HK$36.42)
+    Upside to Target  : +12.9%
+    Consensus         : Strong Buy  (25 analysts)
+    Market Cap        : $263.3B
+
+    FUNDAMENTALS
+      Trailing P/E      : 13.0x
+      Forward P/E       : 9.5x
+      Forward EPS       : HK$2.58
+      Revenue Growth    : +45.8%
+      Earnings Growth   : +0.9%
+      Profit Margin     : +4.9%
+      Return on Equity  : +17.9%
+      Debt / Equity     : 24.7
+      52-Week Range     : HK$14.96 — HK$25.62
+
+    WHY THIS STOCK IS WORTH WATCHING
+      • Strong Buy consensus across 25 analysts — high conviction across the street.
+      • Revenue growing at 46% YoY — above-market top-line expansion.
+      • Forward P/E of 9.5x is significantly below trailing P/E — earnings acceleration expected.
+
+    BUSINESS
+      Geely Automobile Holdings Limited, an investment holding
+      company, operates as an automobile manufacturer primarily in
+      the People's Republic of China. The company engages in the
+      research and development, production, marketing, and sale of
+      passenger vehicles; vehicle transmissions; automobile parts;
+      a
+
+    ------------------------------------------------------------
+
+======================================================================
+  CHINA A-SHARES  —  Top Analyst Picks (Eastmoney / 东方财富)
+======================================================================
+
+ANALYST #1  张慧  —  申万宏源
+    Win Rate: 0.0%   |   Avg Return: +0.0%   |   Total Calls: 0
+    (No current picks available)
+
+
+ANALYST #2  郑浩洋  —  中信证券
+    Win Rate: 0.0%   |   Avg Return: +0.0%   |   Total Calls: 0
+    (No current picks available)
+
+
+ANALYST #3  崔若瑜  —  国联民生
+    Win Rate: 0.0%   |   Avg Return: +0.0%   |   Total Calls: 0
+    (No current picks available)
+
+
+ANALYST #4  马佳伟  —  民生证券
+    Win Rate: 0.0%   |   Avg Return: +0.0%   |   Total Calls: 0
+    (No current picks available)
+
+
+ANALYST #5  要文强  —  东北证券
+    Win Rate: 0.0%   |   Avg Return: +0.0%   |   Total Calls: 0
+    (No current picks available)
+
+
+ANALYST #6  张力月  —  广发证券
+    Win Rate: 0.0%   |   Avg Return: +0.0%   |   Total Calls: 0
+    (No current picks available)
+
+
+ANALYST #7  李璐毅  —  中原证券
+    Win Rate: 0.0%   |   Avg Return: +0.0%   |   Total Calls: 0
+    (No current picks available)
+
+
+ANALYST #8  周儒飞  —  方正证券
+    Win Rate: 0.0%   |   Avg Return: +0.0%   |   Total Calls: 0
+    (No current picks available)
+
+
+ANALYST #9  蒋颖  —  开源证券
+    Win Rate: 0.0%   |   Avg Return: +0.0%   |   Total Calls: 0
+    (No current picks available)
+
+
+ANALYST #10  翟一梦  —  中邮证券
+    Win Rate: 0.0%   |   Avg Return: +0.0%   |   Total Calls: 0
+    (No current picks available)
+
+
+======================================================================
+  END OF REPORT  —  Generated 2026-04-21
+======================================================================
