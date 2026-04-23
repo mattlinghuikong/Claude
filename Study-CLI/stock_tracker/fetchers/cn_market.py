@@ -3,9 +3,12 @@ China A-share analyst data via akshare (Eastmoney source).
 Eastmoney publishes analyst accuracy rankings publicly — no API key needed.
 """
 
+import re
 import signal
 import traceback
 from datetime import date, timedelta
+
+_CN_TICKER_RE = re.compile(r"^\d{6}$")
 
 try:
     import akshare as ak
@@ -229,29 +232,32 @@ def _sector_default_pe(ticker):
     return 15.0
 
 
-def _em_analyst_targets(tickers, per_ticker_timeout=8, inter_request_delay=2.5, budget=30):
+def _em_analyst_targets(tickers, per_ticker_timeout=6, budget=20, workers=6):
     """
     Fetch median analyst target price from Eastmoney research reports
     (direct API call — akshare drops the indvAimPriceT/indvAimPriceL fields).
 
     Returns dict: {ticker: median_analyst_target}. Only populated when ≥1 report
     has a non-zero target price in the last 180 days.
+
+    Parallelized across a small thread pool. `budget` is a soft wall-clock cap.
     """
     try:
         import requests as _req
         import time as _t
+        import concurrent.futures as _cf
     except ImportError:
         return {}
 
     url = "https://reportapi.eastmoney.com/report/list"
     begin = (date.today() - timedelta(days=180)).isoformat()
     end_str = f"{date.today().year + 1}-01-01"
-    targets = {}
-    deadline = _t.time() + budget
 
-    for ticker in tickers:
-        if _t.time() >= deadline:
-            break
+    valid = [t for t in tickers if _CN_TICKER_RE.match(str(t))]
+    if not valid:
+        return {}
+
+    def _one(ticker):
         try:
             params = {
                 "code": ticker, "pageSize": "50", "pageNo": "1",
@@ -267,15 +273,28 @@ def _em_analyst_targets(tickers, per_ticker_timeout=8, inter_request_delay=2.5, 
                    and float(row.get("indvAimPriceT", 0) or 0) > 0]
             if pts:
                 pts.sort()
-                targets[ticker] = pts[len(pts) // 2]   # median analyst target
+                return ticker, pts[len(pts) // 2]
         except Exception:
             pass
-        _t.sleep(inter_request_delay)
+        return ticker, None
 
+    targets = {}
+    deadline = _t.time() + budget
+    with _cf.ThreadPoolExecutor(max_workers=workers) as ex:
+        futures = [ex.submit(_one, t) for t in valid]
+        for fut in _cf.as_completed(futures):
+            if _t.time() >= deadline:
+                break
+            try:
+                ticker, val = fut.result(timeout=per_ticker_timeout + 2)
+            except Exception:
+                continue
+            if val is not None:
+                targets[ticker] = val
     return targets
 
 
-def get_cn_price_targets(ticker_price_map, ths_timeout=12, em_budget=30):
+def get_cn_price_targets(ticker_price_map, ths_timeout=8, em_budget=20):
     """
     Fetch and compute price targets for CN stocks using two sources:
 
@@ -306,30 +325,42 @@ def get_cn_price_targets(ticker_price_map, ths_timeout=12, em_budget=30):
     # ── Source 1: Actual analyst targets from Eastmoney reports ──────────────
     em_targets = _em_analyst_targets(tickers, budget=em_budget)
 
-    # ── Source 2: THS consensus EPS for current, next, and year-after year ───
-    ths_eps_this  = {}   # e.g. 2026
-    ths_eps_next  = {}   # e.g. 2027
-    ths_eps_after = {}   # e.g. 2028 — used when current-year EPS is lumpy
-    for ticker in tickers:
-        if ticker in em_targets:
-            continue   # already have a real target, skip THS for this one
-        val = _timed(
-            lambda t=ticker: ak.stock_profit_forecast_ths(
-                symbol=t, indicator="预测年报每股收益"),
-            timeout=ths_timeout)
-        if val is not None and not val.empty:
-            val.columns = [c.strip() for c in val.columns]
-            for _, row in val.iterrows():
-                yr  = str(row.get("年度", ""))
-                eps = _safe_float(row.get("均值", 0))
-                if yr.startswith(this_year)  and ticker not in ths_eps_this:
-                    ths_eps_this[ticker]  = eps
-                if yr.startswith(next_year)  and ticker not in ths_eps_next:
-                    ths_eps_next[ticker]  = eps
-                if yr.startswith(year_after) and ticker not in ths_eps_after:
-                    ths_eps_after[ticker] = eps
-            if ticker not in ths_eps_next and not val.empty:
-                ths_eps_next[ticker] = _safe_float(val.iloc[0].get("均值", 0))
+    # ── Source 2: THS consensus EPS — parallelized per-ticker ────────────────
+    ths_eps_this: dict[str, float]  = {}
+    ths_eps_next: dict[str, float]  = {}
+    ths_eps_after: dict[str, float] = {}
+    ths_targets = [t for t in tickers if t not in em_targets]
+
+    def _fetch_ths(ticker):
+        try:
+            val = ak.stock_profit_forecast_ths(symbol=ticker, indicator="预测年报每股收益")
+            return ticker, val
+        except Exception:
+            return ticker, None
+
+    import concurrent.futures as _cf
+    if ths_targets:
+        with _cf.ThreadPoolExecutor(max_workers=6) as ex:
+            futs = [ex.submit(_fetch_ths, t) for t in ths_targets]
+            for fut in _cf.as_completed(futs):
+                try:
+                    ticker, val = fut.result(timeout=ths_timeout)
+                except Exception:
+                    continue
+                if val is None or val.empty:
+                    continue
+                val.columns = [c.strip() for c in val.columns]
+                for _, row in val.iterrows():
+                    yr  = str(row.get("年度", ""))
+                    eps = _safe_float(row.get("均值", 0))
+                    if yr.startswith(this_year)  and ticker not in ths_eps_this:
+                        ths_eps_this[ticker]  = eps
+                    if yr.startswith(next_year)  and ticker not in ths_eps_next:
+                        ths_eps_next[ticker]  = eps
+                    if yr.startswith(year_after) and ticker not in ths_eps_after:
+                        ths_eps_after[ticker] = eps
+                if ticker not in ths_eps_next and not val.empty:
+                    ths_eps_next[ticker] = _safe_float(val.iloc[0].get("均值", 0))
 
     # ── Compute fallback targets for stocks without EM data ───────────────────
     targets = dict(em_targets)   # start from actual analyst targets
@@ -376,11 +407,21 @@ def build_cn_report_data(top_n_analysts=20, picks_per_analyst=3):
     if err and not analysts:
         return [], err
 
-    # Collect all picks first so we can batch-fetch price targets in one parallel call
+    # Parallelize the 20 per-analyst picks fetches — each hits Eastmoney
+    # once, so sequential would cost ~2-5s × 20 = 40-100s on wall time.
+    import concurrent.futures as _cf
     analyst_picks_map = {}
-    for analyst in analysts:
-        picks = get_analyst_picks(analyst["analyst_id"], top_n=picks_per_analyst)
-        analyst_picks_map[analyst["analyst_id"]] = picks
+    with _cf.ThreadPoolExecutor(max_workers=6) as ex:
+        futs = {
+            ex.submit(get_analyst_picks, a["analyst_id"], picks_per_analyst): a["analyst_id"]
+            for a in analysts
+        }
+        for fut in _cf.as_completed(futs):
+            analyst_id = futs[fut]
+            try:
+                analyst_picks_map[analyst_id] = fut.result(timeout=15)
+            except Exception:
+                analyst_picks_map[analyst_id] = []
 
     # Build unique ticker→price map for batch target fetch
     ticker_price_map = {}

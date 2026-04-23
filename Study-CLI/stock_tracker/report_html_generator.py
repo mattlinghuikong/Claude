@@ -16,11 +16,23 @@ Usage:
 from __future__ import annotations
 
 import os
+import re
 from datetime import date
 from html import escape
 from typing import Any
 
 from config import REPORTS_DIR
+from aggregator import select_market_top
+
+_ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _safe_date(value: str | None) -> str:
+    """Return value if it's a plain YYYY-MM-DD, else today's date.
+    Prevents ../ path traversal when the date is used in a filename."""
+    if value and _ISO_DATE_RE.match(value):
+        return value
+    return date.today().isoformat()
 
 
 # ---------------------------------------------------------------------------
@@ -589,6 +601,103 @@ def _css() -> str:
     .mt-4 { margin-top: 4px; }
     .mt-8 { margin-top: 8px; }
 
+    /* ── Featured (top picks) ─────────────────────────────────────────── */
+    .featured-section {
+        padding: 56px 0 8px;
+    }
+    .featured-section .section-title {
+        font-size: 32px;
+        letter-spacing: -0.02em;
+    }
+    .featured-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 20px;
+    }
+    .featured-card {
+        background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
+        border-radius: 22px;
+        border: 1px solid rgba(0,113,227,0.18);
+        box-shadow: 0 12px 40px rgba(0,113,227,0.10);
+        padding: 24px 24px 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    .featured-card::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--gold) 0%, var(--accent) 100%);
+    }
+    .featured-rank {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 10px;
+    }
+    .featured-ticker {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-right: 10px;
+    }
+    .featured-name {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-top: 4px;
+    }
+    .featured-price {
+        font-size: 22px;
+        font-weight: 600;
+        margin-top: 16px;
+    }
+    .featured-reasons {
+        margin-top: 14px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+    .featured-reasons li {
+        list-style: none;
+        padding: 4px 0 4px 18px;
+        position: relative;
+    }
+    .featured-reasons li::before {
+        content: "→";
+        position: absolute;
+        left: 0;
+        color: var(--accent);
+        font-weight: 700;
+    }
+
+    /* ── Market section headers ───────────────────────────────────────── */
+    .market-section {
+        padding: 48px 0 12px;
+    }
+    .market-section-header {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 12px;
+    }
+    .market-section-title {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+    .market-section-subtitle {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
     /* ── Responsive ──────────────────────────────────────────────────── */
     @media (max-width: 768px) {
         .hero { padding: 48px 24px 44px; }
@@ -650,6 +759,20 @@ def _build_reasons(stock: dict) -> list[str]:
         reasons.append(f"Analysts see {upside:.0f}% upside to consensus target — significant re-rating potential.")
     elif upside >= 15:
         reasons.append(f"Analyst consensus target implies {upside:.0f}% upside from current price.")
+
+    ret_3m = stock.get("ret_3m")
+    if ret_3m is not None:
+        if 5.0 <= ret_3m <= 40.0:
+            reasons.append(f"Positive 3-month momentum: {ret_3m:+.1f}% — trend is confirming analyst thesis.")
+        elif ret_3m <= -15.0:
+            reasons.append(f"Warning: down {ret_3m:.1f}% over 3 months — wait for a base before buying.")
+
+    eid = stock.get("earnings_in_days")
+    if eid is not None and 0 <= eid <= 30:
+        reasons.append(f"Earnings announcement in ~{eid} days — potential near-term catalyst.")
+
+    if stock.get("above_200dma") is True:
+        reasons.append("Price above 200-day moving average — primary uptrend intact.")
 
     if rec_mean is not None:
         if rec_mean <= 1.5 and n >= 5:
@@ -1006,6 +1129,144 @@ def _sector_flows_html(market_ctx: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Featured picks — top 3 across all markets
+# ---------------------------------------------------------------------------
+
+def _featured_card_html(stock: dict, rank: int) -> str:
+    ticker = escape(str(stock.get("ticker", "?")))
+    name = escape(str(stock.get("name", ticker)))
+    market = stock.get("market", "US")
+    currency = "¥" if market == "CN" else ("HK$" if market == "HK" else "$")
+    current = _fmt_price(stock.get("current_price"), currency)
+    target = _fmt_price(stock.get("price_target") or stock.get("target_mean"), currency)
+    upside = stock.get("upside_pct")
+    upside_str = _fmt_pct(upside) if upside is not None else "N/A"
+    upside_cls = _upside_class(upside)
+    market_badge = _market_badge(market)
+
+    reasons = _build_reasons(stock)[:3]
+    reasons_html = "".join(f"<li>{escape(r)}</li>" for r in reasons)
+
+    return f"""
+    <div class="featured-card">
+        <div class="featured-rank">#{rank} · Most Worth Attention</div>
+        <div>
+            <span class="featured-ticker">{ticker}</span>
+            {market_badge}
+        </div>
+        <div class="featured-name">{name}</div>
+        <div class="featured-price">
+            {current} <span class="price-arrow">→</span>
+            <span class="price-target">{target}</span>
+            <span class="upside-badge {upside_cls}" style="margin-left:10px;">{upside_str}</span>
+        </div>
+        <ul class="featured-reasons">{reasons_html}</ul>
+    </div>
+    """
+
+
+def _featured_section_html(picks: list[dict]) -> str:
+    if not picks:
+        return ""
+    cards = "\n".join(_featured_card_html(s, i + 1) for i, s in enumerate(picks))
+    return f"""
+    <section class="section featured-section">
+        <div class="section-header">
+            <h2 class="section-title">⭐ Most Worth Your Attention</h2>
+            <span class="section-count">Top {len(picks)} · Across all markets</span>
+        </div>
+        <div class="featured-grid">{cards}</div>
+    </section>
+    """
+
+
+# ---------------------------------------------------------------------------
+# Per-market section (up to N picks, industry-capped)
+# ---------------------------------------------------------------------------
+
+def _market_section_html(market: str, label: str, subtitle: str, picks: list[dict]) -> str:
+    if not picks:
+        return ""
+    cards_html = "\n".join(_stock_card_html(s) for s in picks)
+    badge = _market_badge(market)
+    return f"""
+    <section class="market-section">
+        <div class="market-section-header">
+            <h2 class="market-section-title">{label} {badge}</h2>
+            <span class="market-section-subtitle">{escape(subtitle)} · {len(picks)} picks</span>
+        </div>
+        <div class="card-grid">
+            {cards_html}
+        </div>
+    </section>
+    """
+
+
+# ---------------------------------------------------------------------------
+# Performance (historical picks) section
+# ---------------------------------------------------------------------------
+
+def _performance_html(performance_rows: list[dict]) -> str:
+    """Render realised performance of past tier-1/2 picks."""
+    if not performance_rows:
+        return ""
+
+    # Compute realised return per pick.
+    prepared = []
+    for r in performance_rows:
+        pub = float(r.get("price_at_pub") or 0)
+        cur = float(r.get("current_price") or 0)
+        if pub <= 0 or cur <= 0:
+            continue
+        ret_pct = (cur - pub) / pub * 100
+        prepared.append({**r, "ret_pct": ret_pct})
+
+    if not prepared:
+        return ""
+
+    wins = sum(1 for p in prepared if p["ret_pct"] > 0)
+    win_rate = wins / len(prepared) * 100
+    avg_ret = sum(p["ret_pct"] for p in prepared) / len(prepared)
+
+    # Show top 12 most recent.
+    prepared.sort(key=lambda p: p.get("report_date", ""), reverse=True)
+    rows_html = ""
+    for p in prepared[:12]:
+        ticker = escape(str(p.get("ticker", "")))
+        name = escape(str(p.get("name", "")))
+        ret_pct = p["ret_pct"]
+        cls = "flow-positive" if ret_pct >= 0 else "flow-negative"
+        sign = "▲" if ret_pct >= 0 else "▼"
+        rd = escape(str(p.get("report_date", "")))
+        tier_str = f"T{p.get('tier', '?')}"
+        rows_html += f"""
+        <div class="flow-card">
+            <div class="flow-sector">{ticker} · {tier_str}</div>
+            <div class="flow-value {cls}">{sign} {abs(ret_pct):.1f}%</div>
+            <div class="flow-pct">{rd} · {name}</div>
+        </div>
+        """
+
+    summary = (
+        f'Historical picks: <strong>{win_rate:.0f}% win rate</strong> · '
+        f'<strong>{avg_ret:+.1f}%</strong> avg return across {len(prepared)} picks'
+    )
+
+    return f"""
+    <section class="flows-section">
+        <div class="section-header">
+            <h2 class="section-title">📈 Our Track Record</h2>
+            <span class="section-count">Realized — past tier 1/2 picks</span>
+        </div>
+        <p class="text-secondary" style="margin-bottom:16px;font-size:13px;">{summary}</p>
+        <div class="flows-cards">
+            {rows_html}
+        </div>
+    </section>
+    """
+
+
+# ---------------------------------------------------------------------------
 # Hero header HTML
 # ---------------------------------------------------------------------------
 
@@ -1093,6 +1354,7 @@ def generate_html(
     aggregated: dict,
     market_ctx: dict,
     report_date: str | None = None,
+    performance_rows: list[dict] | None = None,
 ) -> str:
     """
     Generate a self-contained Apple-style HTML report.
@@ -1112,23 +1374,48 @@ def generate_html(
     -------
     str : Full HTML document as a string.
     """
-    today = report_date or date.today().isoformat()
+    today = _safe_date(report_date)
     stats = aggregated.get("stats", {})
-    tier1 = aggregated.get("tier1", [])
-    tier2 = aggregated.get("tier2", [])
-    tier3 = aggregated.get("tier3", [])
+    all_stocks = aggregated.get("all") or (
+        aggregated.get("tier1", []) + aggregated.get("tier2", []) + aggregated.get("tier3", [])
+    )
+    all_sorted = sorted(all_stocks, key=lambda s: s.get("priority_score", 0), reverse=True)
 
-    # Inject top pick ticker into market_ctx for hero display
+    # Per-market top picks — max 10 each, max 2 per industry.
+    us_picks = select_market_top(all_stocks, "US", limit=10, industry_cap=2)
+    hk_picks = select_market_top(all_stocks, "HK", limit=10, industry_cap=2)
+    cn_picks = select_market_top(all_stocks, "CN", limit=10, industry_cap=2)
+
+    # Featured = top 3 overall, but each must come from a distinct market when
+    # possible so the hero shows diversity.
+    seen_markets: set[str] = set()
+    featured: list[dict] = []
+    for s in all_sorted:
+        m = s.get("market", "")
+        if m not in seen_markets:
+            featured.append(s)
+            seen_markets.add(m)
+        if len(featured) >= 3:
+            break
+    # Fill the rest with highest-score remainders if fewer than 3 markets.
+    for s in all_sorted:
+        if len(featured) >= 3:
+            break
+        if s not in featured:
+            featured.append(s)
+
+    # Hero top-pick comes from featured.
     ctx = dict(market_ctx or {})
-    all_tiers = tier1 + tier2 + tier3
-    if all_tiers and "_top_pick_ticker" not in ctx:
-        ctx["_top_pick_ticker"] = all_tiers[0].get("ticker", "—")
+    if featured and "_top_pick_ticker" not in ctx:
+        ctx["_top_pick_ticker"] = featured[0].get("ticker", "—")
 
     hero = _hero_html(stats, today, ctx)
     flows = _sector_flows_html(ctx)
-    t1_section = _tier_section_html(1, tier1)
-    t2_section = _tier_section_html(2, tier2)
-    t3_section = _tier_section_html(3, tier3)
+    performance = _performance_html(performance_rows or [])
+    featured_html = _featured_section_html(featured)
+    us_html = _market_section_html("US", "US Equities — Top Picks", "NYSE / NASDAQ (max 2 per industry)", us_picks)
+    hk_html = _market_section_html("HK", "Hong Kong — Top Picks", "HKEX (max 2 per industry)", hk_picks)
+    cn_html = _market_section_html("CN", "China A-Shares — Top Picks", "Eastmoney / 东方财富 (max 2 per industry)", cn_picks)
     footer = _footer_html(today)
 
     css = _css()
@@ -1149,13 +1436,17 @@ def generate_html(
 
 <div class="container">
 
+{featured_html}
+
+{us_html}
+
+{hk_html}
+
+{cn_html}
+
 {flows}
 
-{t1_section}
-
-{t2_section}
-
-{t3_section}
+{performance}
 
 </div>
 
@@ -1182,7 +1473,7 @@ def save_html(html: str, report_date: str | None = None) -> str:
     str : Absolute path to the saved file.
     """
     os.makedirs(REPORTS_DIR, exist_ok=True)
-    today = report_date or date.today().isoformat()
+    today = _safe_date(report_date)
     path = os.path.join(REPORTS_DIR, f"{today}.html")
     with open(path, "w", encoding="utf-8") as f:
         f.write(html)

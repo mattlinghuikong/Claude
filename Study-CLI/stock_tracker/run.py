@@ -15,7 +15,12 @@ from datetime import date
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import FMP_API_KEY
-from db import init_db
+from db import (
+    init_db,
+    record_published_picks,
+    snapshot_prices,
+    get_realised_performance,
+)
 from fetchers.us_market import build_us_report_data
 from fetchers.hk_market import build_hk_report_data
 from fetchers.cn_market import build_cn_report_data
@@ -80,6 +85,8 @@ def main():
         if not args.no_ext and FMP_API_KEY:
             print("      Enriching HK with FMP analyst grades...")
             hk_stocks, err = enrich_with_fmp(hk_stocks, FMP_API_KEY)
+            if err:
+                print(f"      HK FMP warning: {err}")
 
     # ── China A-shares ─────────────────────────────────────────────
     cn_data = []
@@ -110,9 +117,36 @@ def main():
     print(f"      Tier 1 (High Conviction): {len(aggregated.get('tier1', []))} stocks")
     print(f"      Tier 2 (Strong Picks):    {len(aggregated.get('tier2', []))} stocks")
     print(f"      Tier 3 (Watch List):      {len(aggregated.get('tier3', []))} stocks")
+    from aggregator import select_market_top
+    us_top = select_market_top(aggregated.get("all", []), "US", limit=10)
+    hk_top = select_market_top(aggregated.get("all", []), "HK", limit=10)
+    cn_top = select_market_top(aggregated.get("all", []), "CN", limit=10)
+    print(f"      Report: US top {len(us_top)} · HK top {len(hk_top)} · CN top {len(cn_top)} (max 2 per industry)")
+
+    # ── Persist for performance tracking ───────────────────────────
+    all_picks = aggregated.get("tier1", []) + aggregated.get("tier2", []) + aggregated.get("tier3", [])
+    try:
+        snapshot_prices(all_picks, snapshot_date=report_date)
+        n_saved = record_published_picks(
+            report_date,
+            aggregated.get("tier1", []) + aggregated.get("tier2", []),
+        )
+        print(f"      Recorded {n_saved} picks for performance tracking.")
+    except Exception as e:
+        print(f"      Persistence warning: {e}")
+
+    # Historical realised performance of past tier1/2 picks (if any).
+    try:
+        perf_rows = get_realised_performance(lookback_days=180, min_age_days=7)
+    except Exception:
+        perf_rows = []
 
     # ── HTML Report ────────────────────────────────────────────────
-    html = generate_html(aggregated, market_ctx, report_date=report_date)
+    html = generate_html(
+        aggregated, market_ctx,
+        report_date=report_date,
+        performance_rows=perf_rows,
+    )
     html_path = save_html(html, report_date=report_date)
     print(f"\n[Done] HTML report: {html_path}")
 
@@ -128,3 +162,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # akshare spawns internal threads with their own tqdm loops that don't
+    # respect our timeouts. After we've saved the report, we don't need to
+    # wait for them — force-exit cleanly.
+    os._exit(0)

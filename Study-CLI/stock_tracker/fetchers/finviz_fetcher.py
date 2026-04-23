@@ -4,8 +4,11 @@ Scrapes https://finviz.com/ratings.ashx for recent US analyst
 upgrade/downgrade actions with firm name, rating, and price target.
 """
 
+import re
 import traceback
 from datetime import date, timedelta
+
+_TICKER_RE = re.compile(r"^[A-Z0-9.\-]{1,12}$")
 
 try:
     import requests
@@ -78,15 +81,35 @@ def fetch_ratings(pages=3):
                 link = row.find("a", class_="tab-link")
                 if link and link.get("href"):
                     href = link["href"]
+                    candidate = ""
                     if "quote.ashx?t=" in href:
-                        entry["ticker"] = href.split("t=")[-1].split("&")[0].upper()
+                        candidate = href.split("t=")[-1].split("&")[0].upper()
                     elif "/quote/" in href:
-                        entry["ticker"] = href.split("/quote/")[-1].split("?")[0].upper()
-                all_rows.append(entry)
+                        candidate = href.split("/quote/")[-1].split("?")[0].upper()
+                    if _TICKER_RE.match(candidate):
+                        entry["ticker"] = candidate
+                if entry.get("ticker"):
+                    all_rows.append(entry)
         except Exception as e:
             continue
 
     return all_rows, None
+
+
+def _parse_finviz_date(s):
+    """Finviz dates are like 'Nov-15-25' or 'Today'. Return a date or None."""
+    if not s:
+        return None
+    s = s.strip()
+    if s.lower() == "today":
+        return date.today()
+    for fmt in ("%b-%d-%y", "%b %d, %Y", "%m/%d/%y", "%Y-%m-%d"):
+        try:
+            from datetime import datetime
+            return datetime.strptime(s, fmt).date()
+        except Exception:
+            continue
+    return None
 
 
 def get_bullish_upgrades(days=7, min_pages=3):
@@ -107,6 +130,10 @@ def get_bullish_upgrades(days=7, min_pages=3):
         ticker = row.get("ticker", "")
 
         if not ticker:
+            continue
+
+        parsed = _parse_finviz_date(row.get("date", ""))
+        if parsed is not None and parsed < cutoff:
             continue
 
         # Keep upgrades and strong-buy initiations

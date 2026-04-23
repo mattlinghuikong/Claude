@@ -13,7 +13,9 @@ import concurrent.futures
 from datetime import date, timedelta
 
 REPORT_LOOKBACK_DAYS = 30
-_CALL_TIMEOUT = 20  # seconds per akshare call before giving up
+_CALL_TIMEOUT = 10        # seconds per akshare call before giving up
+_CONTEXT_DEADLINE = 45    # absolute wall-clock cap on build_market_context
+_CONTEXT_WORKERS = 4      # lower concurrency to avoid Eastmoney rate limits
 
 
 def _is_recent(date_str, days=REPORT_LOOKBACK_DAYS):
@@ -108,13 +110,15 @@ def get_sector_fund_flows(indicator="今日"):
     Sector-level fund flow rankings from Eastmoney.
     indicator: "今日" | "5日" | "10日"
     NOTE: Only available during/after A-share trading hours (9:30am–3pm CST).
+    Retries dropped — this is an optional context block, not worth burning
+    wall time when the endpoint is sluggish.
     """
     if ak is None:
         return [], "akshare not installed"
     try:
         df, err = _retry(
             lambda: ak.stock_sector_fund_flow_rank(indicator=indicator, sector_type="行业资金流"),
-            retries=2, delay=5
+            retries=0, delay=0
         )
         if err:
             return [], f"sector fund flow error: {err}"
@@ -332,61 +336,75 @@ def get_research_reports_for_stock(ticker, top_n=5):
         return []
 
 
-def get_latest_reports_for_universe(symbols=None, max_per_stock=2):
+def _reports_for_ticker(ticker, max_per_stock, buy_keywords):
+    """Worker: fetch recent buy-rated research reports for one ticker."""
+    out = []
+    try:
+        df, err = _retry(lambda: ak.stock_research_report_em(symbol=ticker), retries=0, delay=0)
+        if err or df is None or df.empty:
+            return out
+        df.columns = [c.strip() for c in df.columns]
+        count = 0
+        for _, row in df.iterrows():
+            if count >= max_per_stock:
+                break
+            row_date = ""
+            for col in df.columns:
+                if "日期" in col.strip():
+                    row_date = str(row[col])
+                    break
+            if not _is_recent(row_date):
+                continue
+            rating = ""
+            for col in df.columns:
+                if "评级" in col.strip():
+                    rating = str(row[col]).strip()
+                    break
+            if rating and not any(k in rating for k in buy_keywords):
+                continue
+            entry = {"ticker": ticker, "name": "", "title": "", "analyst": "",
+                     "firm": "", "rating": rating, "price_target": 0.0, "date": ""}
+            for col in df.columns:
+                cv = col.strip()
+                if "名称" in cv and "股票" in cv:
+                    entry["name"] = str(row[col])
+                elif ("报告" in cv and "名称" in cv) or "标题" in cv:
+                    entry["title"] = str(row[col])
+                elif "分析师" in cv:
+                    entry["analyst"] = str(row[col])
+                elif "机构" in cv:
+                    entry["firm"] = str(row[col])
+                elif "目标价" in cv:
+                    entry["price_target"] = _safe_float(row[col])
+                elif "日期" in cv:
+                    entry["date"] = str(row[col])
+            out.append(entry)
+            count += 1
+    except Exception:
+        return out
+    return out
+
+
+def get_latest_reports_for_universe(symbols=None, max_per_stock=2, workers=6):
     """
     Pull recent buy-rated research reports for a universe of popular stocks.
+    Parallelized across `workers` concurrent per-ticker fetches.
     Returns flat list sorted by date descending.
     """
     if ak is None:
         return [], "akshare not installed"
     universe = symbols or REPORT_UNIVERSE
-    all_reports = []
     buy_keywords = {"买入", "增持", "强烈推荐", "推荐", "强买"}
-    for ticker in universe:
-        try:
-            df, err = _retry(lambda: ak.stock_research_report_em(symbol=ticker), retries=1, delay=2)
-            if err or df is None or df.empty:
-                continue
-            df.columns = [c.strip() for c in df.columns]
-            count = 0
-            for _, row in df.iterrows():
-                if count >= max_per_stock:
-                    break
-                # Date check — skip reports older than 30 days
-                row_date = ""
-                for col in df.columns:
-                    if "日期" in col.strip():
-                        row_date = str(row[col])
-                        break
-                if not _is_recent(row_date):
-                    continue
-                rating = ""
-                for col in df.columns:
-                    if "评级" in col.strip():
-                        rating = str(row[col]).strip()
-                        break
-                if rating and not any(k in rating for k in buy_keywords):
-                    continue
-                entry = {"ticker": ticker, "name": "", "title": "", "analyst": "",
-                         "firm": "", "rating": rating, "price_target": 0.0, "date": ""}
-                for col in df.columns:
-                    cv = col.strip()
-                    if "名称" in cv and "股票" in cv:
-                        entry["name"] = str(row[col])
-                    elif ("报告" in cv and "名称" in cv) or "标题" in cv:
-                        entry["title"] = str(row[col])
-                    elif "分析师" in cv:
-                        entry["analyst"] = str(row[col])
-                    elif "机构" in cv:
-                        entry["firm"] = str(row[col])
-                    elif "目标价" in cv:
-                        entry["price_target"] = _safe_float(row[col])
-                    elif "日期" in cv:
-                        entry["date"] = str(row[col])
-                all_reports.append(entry)
-                count += 1
-        except Exception:
-            continue
+    all_reports = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
+        futures = [ex.submit(_reports_for_ticker, t, max_per_stock, buy_keywords)
+                   for t in universe]
+        for fut in concurrent.futures.as_completed(futures):
+            try:
+                rows = fut.result(timeout=_CALL_TIMEOUT + 5)
+            except Exception:
+                rows = []
+            all_reports.extend(rows)
 
     all_reports.sort(key=lambda x: x.get("date", ""), reverse=True)
     return all_reports, None
@@ -398,34 +416,44 @@ def get_latest_reports_for_universe(symbols=None, max_per_stock=2):
 
 def build_market_context():
     """
-    Fetch macro-level market context. Returns dict with all data sections.
-    Each fetch is independent — failures don't block others.
+    Fetch macro-level market context. Each fetch is independent, so we run
+    them in parallel — the overall wall time drops to ~max() of the slowest
+    call instead of the sum of all of them.
     """
-    ctx = {}
+    # Each entry: (ctx_key, callable, postprocess). postprocess extracts the
+    # stored value from whatever the fetcher returns.
+    tasks = [
+        ("market_fund_flow",    lambda: get_market_fund_flow(),                      lambda r: r[0] if isinstance(r, tuple) else r),
+        ("sector_flows_today",  lambda: get_sector_fund_flows(indicator="今日"),      lambda r: r[0] if isinstance(r, tuple) else r),
+        ("sector_flows_5d",     lambda: get_sector_fund_flows(indicator="5日"),       lambda r: r[0] if isinstance(r, tuple) else r),
+        ("top_inflow_stocks",   lambda: get_top_inflow_stocks(indicator="今日", top_n=15), lambda r: r[0] if isinstance(r, tuple) else r),
+        ("hot_em",              lambda: get_hot_stocks_em(top_n=15),                 lambda r: r),
+        ("hot_xq",              lambda: get_hot_stocks_xueqiu(top_n=15),             lambda r: r),
+        ("hk_hot",              lambda: get_hk_hot_stocks_em(top_n=10),              lambda r: r),
+        ("latest_reports",      lambda: get_latest_reports_for_universe(max_per_stock=2), lambda r: r[0] if isinstance(r, tuple) else r),
+    ]
 
-    # Overall market fund flow
-    mf, _ = get_market_fund_flow()
-    ctx["market_fund_flow"] = mf
+    import time as _t
+    deadline = _t.time() + _CONTEXT_DEADLINE
+    ctx = {key: ({} if key == "market_fund_flow" else []) for key, _, _ in tasks}
 
-    # Sector fund flows (today + 5-day)
-    flows, _ = get_sector_fund_flows(indicator="今日")
-    ctx["sector_flows_today"] = flows
-    flows5, _ = get_sector_fund_flows(indicator="5日")
-    ctx["sector_flows_5d"] = flows5
-
-    # Top inflow individual stocks
-    inflow, _ = get_top_inflow_stocks(indicator="今日", top_n=15)
-    ctx["top_inflow_stocks"] = inflow
-
-    # Hot stocks — CN
-    ctx["hot_em"] = get_hot_stocks_em(top_n=15)
-    ctx["hot_xq"] = get_hot_stocks_xueqiu(top_n=15)
-
-    # Hot stocks — HK
-    ctx["hk_hot"] = get_hk_hot_stocks_em(top_n=10)
-
-    # Latest research reports for popular stocks
-    reports, _ = get_latest_reports_for_universe(max_per_stock=2)
-    ctx["latest_reports"] = reports
-
+    with concurrent.futures.ThreadPoolExecutor(max_workers=_CONTEXT_WORKERS) as ex:
+        future_to_key = {
+            ex.submit(fn): (key, post) for key, fn, post in tasks
+        }
+        for fut in concurrent.futures.as_completed(future_to_key):
+            key, post = future_to_key[fut]
+            remaining = max(1.0, deadline - _t.time())
+            try:
+                raw = fut.result(timeout=min(_CALL_TIMEOUT + 5, remaining))
+                ctx[key] = post(raw)
+            except Exception:
+                pass  # keep the empty default
+            if _t.time() >= deadline:
+                # Hard stop — cancel anything unstarted; in-flight calls
+                # will wrap up on their own timeouts.
+                for other in future_to_key:
+                    if not other.done():
+                        other.cancel()
+                break
     return ctx

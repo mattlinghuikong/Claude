@@ -3,8 +3,17 @@ Generates a plain-text daily report from fetched analyst data.
 """
 
 import os
+import re
 from datetime import date
 from config import REPORTS_DIR
+
+_ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _safe_date(value):
+    if value and _ISO_DATE_RE.match(value):
+        return value
+    return date.today().isoformat()
 
 
 def _fmt_price(val, currency="$"):
@@ -430,7 +439,7 @@ def _build_finviz_summary(us_stocks):
 
 def generate_report(us_stocks, hk_stocks, cn_data, market_ctx=None, report_date=None):
     """Assemble and return the full plain-text report as a string."""
-    today = report_date or date.today().isoformat()
+    today = _safe_date(report_date)
     market_ctx = market_ctx or {}
     lines = []
 
@@ -481,7 +490,7 @@ def generate_report(us_stocks, hk_stocks, cn_data, market_ctx=None, report_date=
 def save_report(report_text, report_date=None):
     """Save report to reports/<date>.txt and return the file path."""
     os.makedirs(REPORTS_DIR, exist_ok=True)
-    today = report_date or date.today().isoformat()
+    today = _safe_date(report_date)
     path = os.path.join(REPORTS_DIR, f"{today}.txt")
     with open(path, "w", encoding="utf-8") as f:
         f.write(report_text)

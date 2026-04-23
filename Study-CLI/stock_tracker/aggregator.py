@@ -194,13 +194,19 @@ def _compute_priority_score(
     rec_mean: float | None,
     market: str,
     recommenders: list[dict],
+    stock: dict | None = None,
 ) -> float:
     """
-    Priority formula:
-      recommender_count * 20
-      + min(upside_pct, 80)                      (capped)
-      + (5 - rec_mean) * 8                       (US/HK only, rec_mean 1=strong buy)
-      + avg_win_rate / 10                         (CN only)
+    Priority formula (money-making weighted):
+      analyst_conviction = recommender_count * 20 + min(upside, 80) + (5 - rec_mean) * 8
+      momentum           = +12 if 3m return in [5, 40], +6 if above 200DMA
+                           -15 if 3m return < -15 (falling knife)
+      quality            = +6 if margin >=15% AND ROE >=15%
+                           -12 if rev_growth < -10% (revenue shrinking)
+      valuation          = -10 if forward_pe > 60 without earnings growth >25%
+      catalyst           = +8 if earnings within next 30 days
+      analyst_quality    = CN only — weight recommenders by their historical
+                           win rate instead of raw count.
     """
     score: float = recommender_count * 20
 
@@ -213,6 +219,42 @@ def _compute_priority_score(
         win_rates = [_safe_float(r.get("win_rate", 0)) for r in recommenders]
         avg_win = sum(win_rates) / len(win_rates) if win_rates else 0.0
         score += avg_win / 10.0
+        # Extra credit when multiple *high-accuracy* analysts converge
+        high_wr = sum(1 for wr in win_rates if wr >= 60)
+        score += high_wr * 6.0
+
+    if stock is None:
+        return round(score, 2)
+
+    # ── Momentum ────────────────────────────────────────────────────────────
+    ret_3m = stock.get("ret_3m")
+    if ret_3m is not None:
+        if 5.0 <= ret_3m <= 40.0:
+            score += 12.0         # established uptrend
+        elif ret_3m < -15.0:
+            score -= 15.0         # falling knife — avoid
+    if stock.get("above_200dma") is True:
+        score += 6.0
+
+    # ── Quality filter ──────────────────────────────────────────────────────
+    margin = _safe_float(stock.get("profit_margin"), 0.0)
+    roe = _safe_float(stock.get("roe"), 0.0)
+    if margin >= 0.15 and roe >= 0.15:
+        score += 6.0
+    rev_g = stock.get("revenue_growth")
+    if rev_g is not None and _safe_float(rev_g) < -0.10:
+        score -= 12.0
+
+    # ── Valuation sanity ────────────────────────────────────────────────────
+    fpe = _safe_float(stock.get("forward_pe"), 0.0)
+    earn_g = _safe_float(stock.get("earnings_growth"), 0.0)
+    if fpe > 60.0 and earn_g < 0.25:
+        score -= 10.0             # expensive without the growth to justify it
+
+    # ── Catalyst: earnings announcement coming up ──────────────────────────
+    eid = stock.get("earnings_in_days")
+    if eid is not None and 0 <= eid <= 30:
+        score += 8.0
 
     return round(score, 2)
 
@@ -226,6 +268,7 @@ def _assign_tier(
     upside_pct: float | None,
     rec_mean: float | None,
     market: str,
+    stock: dict | None = None,
 ) -> int:
     """
     Tier 1 "High Conviction":
@@ -237,27 +280,39 @@ def _assign_tier(
         OR (recommender_count == 1 AND upside >= 20 AND rec_mean <= 1.8 [US/HK])
 
     Tier 3 "Watch List": everything else
+
+    Demotion rules (avoid putting risky stocks in tier 1/2):
+        - 3-month return <= -20%  → demote one tier (falling knife)
+        - Revenue growth <= -15%  → demote to tier 3 (deteriorating business)
     """
     upside = _safe_float(upside_pct, 0.0)
 
-    # Tier 1
+    # Compute the base tier from analyst conviction.
     if recommender_count >= 3:
-        return 1
-    if recommender_count >= 2 and upside >= 25:
-        return 1
-
-    # Tier 2
-    if recommender_count >= 2:
-        return 2
-    if recommender_count == 1 and upside >= 20:
+        tier = 1
+    elif recommender_count >= 2 and upside >= 25:
+        tier = 1
+    elif recommender_count >= 2:
+        tier = 2
+    elif recommender_count == 1 and upside >= 20:
         if market in ("US", "HK"):
-            if rec_mean is not None and _safe_float(rec_mean, 3.0) <= 1.8:
-                return 2
+            tier = 2 if (rec_mean is not None and _safe_float(rec_mean, 3.0) <= 1.8) else 3
         else:
             # CN — upside alone is enough for tier 2 if single recommender
-            return 2
+            tier = 2
+    else:
+        tier = 3
 
-    return 3
+    # Risk-based demotion.
+    if stock is not None:
+        ret_3m = stock.get("ret_3m")
+        if ret_3m is not None and ret_3m <= -20.0 and tier < 3:
+            tier += 1
+        rev_g = stock.get("revenue_growth")
+        if rev_g is not None and _safe_float(rev_g) <= -0.15:
+            tier = 3
+
+    return tier
 
 
 # ---------------------------------------------------------------------------
@@ -277,9 +332,9 @@ def _enrich_stock(stock: dict) -> dict:
     market = stock.get("market", "US")
 
     priority_score = _compute_priority_score(
-        recommender_count, upside_pct, rec_mean, market, recommenders
+        recommender_count, upside_pct, rec_mean, market, recommenders, stock
     )
-    tier = _assign_tier(recommender_count, upside_pct, rec_mean, market)
+    tier = _assign_tier(recommender_count, upside_pct, rec_mean, market, stock)
 
     stock["recommender_count"] = recommender_count
     stock["priority_score"] = priority_score
@@ -290,6 +345,37 @@ def _enrich_stock(stock: dict) -> dict:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
+def select_market_top(
+    stocks: list[dict],
+    market: str,
+    limit: int = 10,
+    industry_cap: int = 2,
+) -> list[dict]:
+    """Greedy-pick the top N stocks for one market with industry diversification.
+
+    Order: highest priority_score first. Stop when we've hit `limit` picks, or
+    when we can't add a new stock without breaching `industry_cap` for its
+    industry. CN stocks usually have blank industry — those are treated as
+    unique (no cap applied).
+    """
+    filtered = [s for s in stocks if s.get("market") == market]
+    filtered.sort(key=lambda x: x.get("priority_score", 0), reverse=True)
+
+    picks: list[dict] = []
+    industry_counts: dict[str, int] = {}
+    for s in filtered:
+        industry = (s.get("industry") or s.get("sector") or "").strip().lower()
+        if industry:
+            if industry_counts.get(industry, 0) >= industry_cap:
+                continue
+        picks.append(s)
+        if industry:
+            industry_counts[industry] = industry_counts.get(industry, 0) + 1
+        if len(picks) >= limit:
+            break
+    return picks
+
 
 def aggregate_all(
     us_stocks: list[dict],
@@ -396,5 +482,6 @@ def aggregate_all(
         "tier1": tier1,
         "tier2": tier2,
         "tier3": tier3,
+        "all": all_stocks,
         "stats": stats,
     }
