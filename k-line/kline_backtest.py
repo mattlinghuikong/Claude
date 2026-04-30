@@ -124,6 +124,45 @@ CN_INDEX_TICKER = "000300.SS"
 # v8 filters: drop bb (proven redundant), add mfi/cci/kdj.
 V8_FILTER_KEYS = ("macd", "rsi", "obv", "atr_exp", "mfi", "cci", "kdj")
 
+# --- v9 — per-market filter dispatch ---------------------------------------
+# Each market gets the filter set that maximised PF in the v8 grid search.
+# This turns "different markets need different strategies" from a finding
+# into an automatic dispatch — no more one-size-fits-all.
+BEST_FILTERS_PER_MARKET: dict[str, frozenset[str]] = {
+    # Calibrated on 100-ticker grid (largest sample to date). Cross-sample
+    # robustness check (20/30/66/100) shows the ROBUST core per market:
+    #
+    # US: atr_exp + mfi + obv appear in EVERY sample size's optimum.
+    #     macd is in 20 and 100 (winning at the largest two samples) → keep.
+    "US": frozenset({"atr_exp", "macd", "mfi", "obv"}),  # PF 1.83 @ 100-tick
+    # HK: every sample > 20 has all-negative grids. PF 0.80 is "least bad".
+    "HK": frozenset({"kdj", "macd"}),                     # PF 0.80 @ 100-tick
+    # CN: rsi present at 66 and 100. mfi present at 20/30/100. atr_exp at 100.
+    "CN": frozenset({"atr_exp", "mfi", "rsi"}),          # PF 1.78 @ 100-tick
+}
+
+# Markets where the strategy is fundamentally not profitable in the 3y window.
+# When True, v9 still runs (for measurement) but the recommended config is to
+# allocate 0 capital to these markets in production.
+HK_TRADE_ALLOWED = False  # 100-ticker grid: best filter still PF 0.80, -311%
+CN_TRADE_ALLOWED = True   # PF 1.78 @ 100-tick (vs 2.32 @ 66-tick — still solid)
+
+# --- v10 — stock-level pre-filter + regime persistence -------------------
+# Yearly stability investigation showed 2024 was a loss year for v3-v9.
+# v10 addresses this by tightening entry quality: only trade stocks that
+# are themselves already in uptrend (price > MA200) AND only after the
+# market regime has been established for several bars.
+V10_STOCK_MA = 200              # close must be > MA200 for long entry
+V10_REGIME_PERSIST_BARS = 10    # index ADX > threshold for >= N consecutive bars
+
+# --- v11 — strict regime classifier (post walk-forward) ------------------
+# Walk-forward (train 2025, test 2026) showed that all v10 winners failed.
+# Diagnosis: v10's regime gate is too loose (ADX>18 for 10 bars). v11 only
+# trades in CLEAR strong-bull regimes — far fewer entries but more robust.
+V11_STRONG_ADX_MIN = 25         # raise threshold to "clear trend" level
+V11_STRONG_PERSIST_BARS = 30    # raise persistence to ~6 weeks
+V11_REQUIRE_INDEX_ABOVE_MA200 = True  # only bull regime (no shorts in bear)
+
 # In-memory cache for the per-market regime calculation (avoid recomputing
 # across the 20 stocks of that market). Keyed by market label.
 _REGIME_CACHE: dict[str, dict] = {}
@@ -160,7 +199,7 @@ MARKET_PARAMS = {
 # to opt in to K2's 3-level filter (suitable for ~3+ years of data).
 USE_THREE_LEVEL_DEFAULT = False
 
-SAMPLE_SIZE = 20
+SAMPLE_SIZE = 200       # 200 per market: US/HK auto-cap to universe; CN gets 200 from 212 candidates
 RANDOM_SEED = 42
 NETWORK_TIMEOUT = 30
 MAX_WORKERS = 5
@@ -205,12 +244,22 @@ logging.basicConfig(
 # the test reproducible and avoids fragile web-scraping at runtime.
 
 US_UNIVERSE = [
+    # Mega-caps
     "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "BRK-B",
     "JPM", "V", "JNJ", "WMT", "MA", "PG", "UNH", "XOM", "HD", "CVX",
     "BAC", "ABBV", "PFE", "KO", "PEP", "AVGO", "COST", "TMO", "DIS",
     "CSCO", "MRK", "ABT", "ACN", "ADBE", "VZ", "NFLX", "CRM", "DHR",
     "INTC", "AMD", "ORCL", "T", "QCOM", "TXN", "IBM", "NKE", "GE",
     "BA", "F", "GM", "CAT", "MMM",
+    # +25 large-caps (S&P500 expansion for 66-sample backtest)
+    "LLY", "MS", "GS", "PYPL", "BLK", "SCHW", "AXP", "COP", "NEE", "DUK",
+    "SO", "TGT", "LMT", "RTX", "BMY", "AMGN", "MDT", "SBUX", "MCD", "LOW",
+    "SPGI", "ADI", "AMAT", "MU", "PLD",
+    # +35 more (S&P500 broader for 100-sample backtest)
+    "INTU", "ICE", "CME", "NOW", "KLAC", "LRCX", "DELL", "MO", "USB", "EOG",
+    "COF", "DE", "PNC", "BX", "CMG", "BK", "CB", "ETN", "ITW", "WFC",
+    "C", "BSX", "ZTS", "ELV", "HUM", "VLO", "MPC", "D", "AEP", "EMR",
+    "HON", "UPS", "FDX", "ROST", "AMT",
 ]
 
 HK_UNIVERSE = [
@@ -224,6 +273,16 @@ HK_UNIVERSE = [
     "1928.HK", "2018.HK", "2269.HK", "2313.HK", "2318.HK", "2382.HK",
     "2388.HK", "2628.HK", "3690.HK", "3968.HK", "3988.HK", "9618.HK",
     "9888.HK", "9988.HK", "9999.HK",
+    # +18 HK / HSI broader (大蓝筹 + 国企 + 科技 + 内房)
+    "0019.HK", "0023.HK", "0151.HK", "0270.HK", "0322.HK", "0489.HK",
+    "0788.HK", "1099.HK", "1186.HK", "1336.HK", "1772.HK", "1818.HK",
+    "2007.HK", "2331.HK", "2899.HK", "3328.HK", "6862.HK", "9633.HK",
+    # +30 mid-cap HK (multi-sector for 100-sample backtest)
+    "0008.HK", "0144.HK", "0200.HK", "0220.HK", "0257.HK", "0285.HK",
+    "0392.HK", "0494.HK", "0728.HK", "0836.HK", "0868.HK", "0902.HK",
+    "0916.HK", "1066.HK", "1071.HK", "1138.HK", "1171.HK", "1378.HK",
+    "2196.HK", "2333.HK", "2367.HK", "3618.HK", "3692.HK", "3699.HK",
+    "6178.HK", "6618.HK", "6837.HK", "0708.HK", "0998.HK", "2378.HK",
 ]
 
 CN_UNIVERSE = [
@@ -236,6 +295,52 @@ CN_UNIVERSE = [
     "002415", "300760", "002352", "002304", "002241", "002142", "300033",
     "002027", "002001", "000001", "000002", "000333",
     "000538", "000651", "000725", "000776", "000858", "000895",
+    # +17 CSI300 expansion (医药/化工/有色/酒/科技广覆盖)
+    "600196", "600547", "600196", "002493", "002180", "002032", "002048",
+    "002558", "600795", "601377", "002683", "002648", "601066", "000596",
+    "600009", "002032", "601012",  # some duplicates harmless (sorted+set later)
+    "601877", "002311", "002007", "300012", "603259", "002603",
+    "600362", "601318",
+    # +30 broader CSI300 / CSI500 (银行/能源/科技/制造广覆盖) for 100-sample
+    "600340", "600900", "600919", "601169", "601186", "601211", "601229",
+    "601238", "601336", "601390", "601658", "601688", "601728", "601766",
+    "601788", "601818", "601827", "601838", "601881", "601888", "601898",
+    "601919", "601989", "601998", "603288", "603501", "603799", "603833",
+    "603899", "603986",
+    # +100 CSI300/CSI500 deeper (200-sample expansion to test CN robustness)
+    # Banks & Financials
+    "600015", "600926", "601077", "601128", "601198", "601555", "601009",
+    "601099", "601939", "601990", "600999", "600028", "600837",
+    # Consumer & Retail
+    "600600", "600702", "600872", "603027", "603369", "603517", "603605",
+    "600179", "600259", "600660", "603899", "603899",
+    # Tech & Semiconductors
+    "002049", "002074", "002129", "002179", "002242", "002271", "002414",
+    "002460", "002463", "002508", "002736", "002916", "003816",
+    "300014", "300017", "300070", "300124", "300251", "300316", "300347",
+    "300408", "300433", "300498", "300601", "300661", "300676",
+    "300751", "300782", "300866", "300003",
+    # Materials / Mining / Energy
+    "600183", "600256", "600859", "601233", "601600", "601633", "601816",
+    "601985", "603799",
+    # Pharma / Biotech
+    "002030", "002022", "300003", "300017", "300251",
+    # Industrial / Auto / EV
+    "601877", "601995", "600481", "600884", "600006", "601208",
+    "002841", "002648",
+    # Misc broader
+    "300144", "300033", "300012",
+    # More CSI300 large caps not yet included
+    "600061", "600872", "601127", "601319", "601611", "601988",
+    "603019", "603160", "603195", "603392", "603501", "603605",
+    "603858", "603883", "603885", "603939",
+    "600438", "601877", "603259", "603799",
+    # +25 to reach 200+ unique
+    "600085", "600089", "600100", "600115", "600118", "600150",
+    "600188", "600198", "600219", "600236", "600271", "600291",
+    "600315", "600436", "600486", "600522", "600566", "600597",
+    "600637", "600754", "600763", "600867", "600886", "600977",
+    "601238",
 ]
 
 
@@ -2528,6 +2633,606 @@ def backtest_v8(df: pd.DataFrame, market: str,
     return trades, use_three
 
 
+def backtest_v10(df: pd.DataFrame, market: str,
+                 ) -> tuple[list[Trade], bool]:
+    """v10 = v9 (per-market dispatch) + stock-level uptrend pre-filter +
+    regime persistence requirement.
+
+    Two added gates on top of v9:
+
+    1. **Stock-level uptrend gate** — long entries require close > MA200
+       (and short entries require close < MA200). Turns off the strategy
+       on stocks that are themselves in a downtrend, addressing the
+       "trade-decliners" failure mode in HK 100-ticker test.
+
+    2. **Regime persistence** — the market index ADX must have been above
+       the threshold for at least V10_REGIME_PERSIST_BARS *consecutive*
+       bars before an entry is allowed. Filters out "just turned trending"
+       false positives that hurt 2024 performance.
+
+    Filter set per market is dispatched from BEST_FILTERS_PER_MARKET, same
+    as v9. v10 is essentially a quality upgrade rather than a new core
+    strategy.
+    """
+    p = MARKET_PARAMS.get(market, MARKET_PARAMS["US"])
+    df = df.sort_values("ts").reset_index(drop=True)
+    n = len(df)
+    if n < V10_STOCK_MA + 50:
+        return [], False
+
+    close = df["close"].to_numpy(dtype=float)
+    high = df["high"].to_numpy(dtype=float)
+    low = df["low"].to_numpy(dtype=float)
+    volume = (df["volume"].to_numpy(dtype=float)
+              if "volume" in df.columns else np.zeros(n))
+    ts = df["ts"].to_numpy()
+
+    s_close = pd.Series(close)
+    ma_fast = s_close.rolling(MA_FAST).mean().to_numpy()
+    ma_mid = s_close.rolling(MA_MID).mean().to_numpy()
+    ma_stock_long = s_close.rolling(V10_STOCK_MA).mean().to_numpy()
+    use_three = n >= MA_SLOW + SWING_LOOKBACK + 50
+    ma_slow = (s_close.rolling(MA_SLOW).mean().to_numpy()
+               if use_three else np.full(n, np.nan))
+
+    sh = pd.Series(high).rolling(SWING_LOOKBACK).max().shift(1).to_numpy()
+    sl = pd.Series(low).rolling(SWING_LOOKBACK).min().shift(1).to_numpy()
+
+    tr = _true_range(high, low, close)
+    atr = pd.Series(tr).rolling(ATR_PERIOD).mean().to_numpy()
+    atr_avg = pd.Series(atr).rolling(ATR_EXPANSION_LOOKBACK).mean().to_numpy()
+
+    ma_mid_lag = np.roll(ma_mid, TREND_SLOPE_PERIOD)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        slope = (ma_mid - ma_mid_lag) / ma_mid_lag / TREND_SLOPE_PERIOD
+    slope[: TREND_SLOPE_PERIOD] = np.nan
+
+    adx = compute_adx(high, low, close, period=ADX_PERIOD)
+    rsi_arr = compute_rsi(close, period=RSI_PERIOD)
+    _, _, macd_h = compute_macd(close)
+    has_volume = bool((volume > 0).any())
+    obv = compute_obv(close, volume) if has_volume else np.zeros(n)
+    obv_ma = (pd.Series(obv).rolling(OBV_MA_PERIOD).mean().to_numpy()
+              if has_volume else np.full(n, np.nan))
+    mfi_arr = (compute_mfi(high, low, close, volume) if has_volume
+               else np.full(n, np.nan))
+    cci_arr = compute_cci(high, low, close)
+    kdj_k, kdj_d, _ = compute_kdj(high, low, close)
+
+    vol_avg = (pd.Series(volume).rolling(20).mean().to_numpy()
+               if has_volume else np.full(n, np.nan))
+
+    weekly_ma_s, weekly_ma_l = compute_weekly_alignment(df)
+    has_weekly = weekly_ma_s is not None
+    regime = get_market_regime(market)
+    regime_ok_per_bar = _align_regime_to_df(df, regime)
+
+    # Regime-persistence transform: True only if regime has been ON for
+    # at least V10_REGIME_PERSIST_BARS consecutive bars.
+    regime_persistent = np.zeros(n, dtype=bool)
+    streak = 0
+    for i in range(n):
+        if regime_ok_per_bar[i]:
+            streak += 1
+        else:
+            streak = 0
+        regime_persistent[i] = streak >= V10_REGIME_PERSIST_BARS
+
+    if market == "CN":
+        cn_long_ok, cn_short_ok = _align_cn_master(df)
+    else:
+        cn_long_ok = np.ones(n, dtype=bool)
+        cn_short_ok = np.ones(n, dtype=bool)
+
+    # v10 dispatches the same per-market filter set as v9.
+    filters = BEST_FILTERS_PER_MARKET.get(market, frozenset())
+    use_macd = "macd" in filters
+    use_rsi = "rsi" in filters
+    use_obv = "obv" in filters
+    use_atrx = "atr_exp" in filters
+    use_mfi = "mfi" in filters
+    use_cci = "cci" in filters
+    use_kdj = "kdj" in filters
+
+    warmup = (MA_SLOW if use_three else MA_MID) + SWING_LOOKBACK + TREND_SLOPE_PERIOD + 1
+    warmup = max(warmup, V10_STOCK_MA + 5)
+    if warmup >= n:
+        return [], False
+
+    trades: list[Trade] = []
+    state = "flat"
+    legs: list[tuple] = []
+    extreme = 0.0
+    init_stop = 0.0
+    using_trail = False
+    consec_losses = 0
+    cooldown_until = 0
+
+    for i in range(warmup, n):
+        c = close[i]; a = atr[i]
+        if not np.isfinite(a) or a <= 0:
+            continue
+
+        f, m, sm = ma_fast[i], ma_mid[i], slope[i]
+        adx_i = adx[i]
+        sl_ma = ma_slow[i] if use_three else None
+        stock_long_ma = ma_stock_long[i]
+
+        adx_ok = np.isfinite(adx_i) and adx_i > p["adx_min"]
+        slope_up = np.isfinite(sm) and sm > p["slope_min"]
+        slope_dn = np.isfinite(sm) and sm < -p["slope_min"]
+
+        if has_weekly:
+            ws, wl = weekly_ma_s[i], weekly_ma_l[i]
+            weekly_up = np.isfinite(ws) and np.isfinite(wl) and ws > wl
+            weekly_dn = np.isfinite(ws) and np.isfinite(wl) and ws < wl
+        else:
+            weekly_up = weekly_dn = True
+
+        # v10 GATE 1: regime must be persistently ON.
+        regime_on = bool(regime_persistent[i])
+        three_up = (sl_ma is not None and m > sl_ma) if use_three else True
+        three_dn = (sl_ma is not None and m < sl_ma) if use_three else True
+
+        # v10 GATE 2: stock itself must be above its MA200 for longs / below for shorts.
+        stock_uptrend = np.isfinite(stock_long_ma) and c > stock_long_ma
+        stock_downtrend = np.isfinite(stock_long_ma) and c < stock_long_ma
+
+        cn_long = bool(cn_long_ok[i])
+        cn_short = bool(cn_short_ok[i])
+
+        macd_up = (not use_macd) or (np.isfinite(macd_h[i]) and macd_h[i] > 0)
+        macd_dn = (not use_macd) or (np.isfinite(macd_h[i]) and macd_h[i] < 0)
+        rsi_up = ((not use_rsi)
+                  or (np.isfinite(rsi_arr[i])
+                      and RSI_LONG_MIN <= rsi_arr[i] <= RSI_LONG_MAX))
+        rsi_dn = ((not use_rsi)
+                  or (np.isfinite(rsi_arr[i])
+                      and RSI_SHORT_MIN <= rsi_arr[i] <= RSI_SHORT_MAX))
+        obv_up = ((not use_obv) or (not has_volume)
+                  or (np.isfinite(obv_ma[i]) and obv[i] > obv_ma[i]))
+        obv_dn = ((not use_obv) or (not has_volume)
+                  or (np.isfinite(obv_ma[i]) and obv[i] < obv_ma[i]))
+        atrx = ((not use_atrx)
+                or (np.isfinite(atr_avg[i]) and atr_avg[i] > 0
+                    and a > atr_avg[i] * ATR_EXPANSION_MULT))
+        mfi_up = ((not use_mfi) or (not has_volume)
+                  or (np.isfinite(mfi_arr[i])
+                      and MFI_LONG_MIN <= mfi_arr[i] <= MFI_LONG_MAX))
+        mfi_dn = ((not use_mfi) or (not has_volume)
+                  or (np.isfinite(mfi_arr[i])
+                      and MFI_SHORT_MIN <= mfi_arr[i] <= MFI_SHORT_MAX))
+        cci_up = ((not use_cci)
+                  or (np.isfinite(cci_arr[i]) and cci_arr[i] > CCI_LONG_MIN))
+        cci_dn = ((not use_cci)
+                  or (np.isfinite(cci_arr[i]) and cci_arr[i] < CCI_SHORT_MAX))
+        kdj_up = ((not use_kdj)
+                  or (np.isfinite(kdj_k[i]) and np.isfinite(kdj_d[i])
+                      and kdj_k[i] > KDJ_LONG_MIN and kdj_k[i] > kdj_d[i]))
+        kdj_dn = ((not use_kdj)
+                  or (np.isfinite(kdj_k[i]) and np.isfinite(kdj_d[i])
+                      and kdj_k[i] < KDJ_SHORT_MAX and kdj_k[i] < kdj_d[i]))
+
+        confluence_up = macd_up and rsi_up and obv_up and atrx and mfi_up and cci_up and kdj_up
+        confluence_dn = macd_dn and rsi_dn and obv_dn and atrx and mfi_dn and cci_dn and kdj_dn
+
+        trend_up = (f > m and slope_up and adx_ok and weekly_up
+                    and regime_on and three_up and confluence_up
+                    and cn_long and stock_uptrend)
+        trend_dn = (f < m and slope_dn and adx_ok and weekly_dn
+                    and regime_on and three_dn and confluence_dn
+                    and cn_short and stock_downtrend)
+
+        bo_up = c > sh[i] + p["atr_buffer"] * a
+        bo_dn = c < sl[i] - p["atr_buffer"] * a
+
+        if has_volume and np.isfinite(vol_avg[i]) and vol_avg[i] > 0:
+            vol_ok = volume[i] >= vol_avg[i] * p["vol_confirm_mult"]
+        else:
+            vol_ok = True
+
+        in_cd = i < cooldown_until
+
+        # State machine identical to v8.
+        if state == "flat":
+            if in_cd:
+                continue
+            if trend_up and bo_up and vol_ok:
+                state = "long"
+                stop_d = p["init_stop_atr"] * a
+                hard_stop = c * (1.0 - PCT_HARD_STOP)
+                init_stop = max(c - stop_d, hard_stop)
+                stop_d = c - init_stop
+                legs = [(ts[i], c, stop_d)]
+                extreme = high[i]
+                using_trail = False
+            elif trend_dn and bo_dn and vol_ok:
+                state = "short"
+                stop_d = p["init_stop_atr"] * a
+                hard_stop = c * (1.0 + PCT_HARD_STOP)
+                init_stop = min(c + stop_d, hard_stop)
+                stop_d = init_stop - c
+                legs = [(ts[i], c, stop_d)]
+                extreme = low[i]
+                using_trail = False
+            continue
+
+        if state == "long":
+            extreme = max(extreme, high[i])
+            first = legs[0][1]
+            hard_floor = first * (1.0 - PCT_HARD_STOP)
+            if not using_trail and (c - first) >= p["trail_activate_atr"] * a:
+                using_trail = True
+            if (p["pyramid"] and len(legs) <= PYRAMID_MAX_ADDS and bo_up
+                    and (c - first) >= p["pyramid_profit_atr"] * a):
+                legs.append((ts[i], c, p["init_stop_atr"] * a))
+            if using_trail:
+                trail = extreme - p["trail_atr"] * a
+                exit_long = (c < trail and c < m) or c < hard_floor
+            else:
+                exit_long = c < init_stop or c < hard_floor
+            if exit_long:
+                won = (c - first) > 0
+                for et, ep, sd in legs:
+                    trades.append(Trade("long", et, ep, ts[i], c, sd))
+                state = "flat"; legs = []; using_trail = False
+                consec_losses = 0 if won else consec_losses + 1
+                if (p["cooldown_after_losses"] > 0
+                        and consec_losses >= p["cooldown_after_losses"]):
+                    cooldown_until = i + p["cooldown_bars"]
+                    consec_losses = 0
+            continue
+
+        # short
+        extreme = min(extreme, low[i])
+        first = legs[0][1]
+        hard_ceil = first * (1.0 + PCT_HARD_STOP)
+        if not using_trail and (first - c) >= p["trail_activate_atr"] * a:
+            using_trail = True
+        if (p["pyramid"] and len(legs) <= PYRAMID_MAX_ADDS and bo_dn
+                and (first - c) >= p["pyramid_profit_atr"] * a):
+            legs.append((ts[i], c, p["init_stop_atr"] * a))
+        if using_trail:
+            trail = extreme + p["trail_atr"] * a
+            exit_short = (c > trail and c > m) or c > hard_ceil
+        else:
+            exit_short = c > init_stop or c > hard_ceil
+        if exit_short:
+            won = (first - c) > 0
+            for et, ep, sd in legs:
+                trades.append(Trade("short", et, ep, ts[i], c, sd))
+            state = "flat"; legs = []; using_trail = False
+            consec_losses = 0 if won else consec_losses + 1
+            if (p["cooldown_after_losses"] > 0
+                    and consec_losses >= p["cooldown_after_losses"]):
+                cooldown_until = i + p["cooldown_bars"]
+                consec_losses = 0
+
+    if state in ("long", "short"):
+        for et, ep, sd in legs:
+            trades.append(Trade(state, et, ep, ts[-1], close[-1], sd))
+    return trades, use_three
+
+
+def _strong_regime_for_market(market: str, df: pd.DataFrame) -> np.ndarray:
+    """v11: classify each bar as 'strong-bull regime' based on the market index.
+
+    Strong bull = index > MA200 AND index ADX > V11_STRONG_ADX_MIN AND that
+    state has held for >= V11_STRONG_PERSIST_BARS consecutive bars.
+
+    Lagged 1 bar to prevent look-ahead.
+    """
+    n = len(df)
+    idx_ticker = INDEX_TICKERS_BY_MARKET.get(market)
+    if not idx_ticker:
+        return np.ones(n, dtype=bool)
+    idx_df = fetch_yf(idx_ticker)
+    if idx_df is None or len(idx_df) < 220:
+        return np.ones(n, dtype=bool)
+
+    high = idx_df["high"].to_numpy(dtype=float)
+    low = idx_df["low"].to_numpy(dtype=float)
+    close = idx_df["close"].to_numpy(dtype=float)
+    adx = compute_adx(high, low, close, period=ADX_PERIOD)
+    ma200 = pd.Series(close).rolling(200).mean().to_numpy()
+
+    cond = np.zeros(len(close), dtype=bool)
+    for i in range(len(close)):
+        if (np.isfinite(adx[i]) and np.isfinite(ma200[i])
+                and adx[i] > V11_STRONG_ADX_MIN):
+            if not V11_REQUIRE_INDEX_ABOVE_MA200 or close[i] > ma200[i]:
+                cond[i] = True
+
+    # Persistence gate
+    persistent = np.zeros(len(close), dtype=bool)
+    streak = 0
+    for i in range(len(close)):
+        if cond[i]:
+            streak += 1
+        else:
+            streak = 0
+        persistent[i] = streak >= V11_STRONG_PERSIST_BARS
+
+    # Lag 1 bar.
+    persistent_lag = np.roll(persistent, 1)
+    persistent_lag[0] = False
+
+    # Align to df via merge_asof.
+    left_ts = _strip_tz(df["ts"])
+    right_ts = _strip_tz(idx_df["ts"])
+    df_ts = pd.DataFrame({"ts": left_ts}).sort_values("ts")
+    reg_df = pd.DataFrame({"ts": right_ts,
+                           "ok": persistent_lag}).sort_values("ts")
+    aligned = pd.merge_asof(df_ts, reg_df, on="ts", direction="backward")
+    return aligned["ok"].fillna(False).to_numpy(dtype=bool)
+
+
+def backtest_v11(df: pd.DataFrame, market: str,
+                 ) -> tuple[list[Trade], bool]:
+    """v11 = v10 + strict strong-regime gate (no entries in weak/bear regimes).
+
+    Walk-forward (train 2025 / test 2026) showed v10 failed completely.
+    Diagnosis: v10's regime gate (ADX>18 for 10 bars) is too permissive,
+    catching too many "false transitions" that reverse next year. v11
+    raises bar:
+      • Index ADX > V11_STRONG_ADX_MIN (25)
+      • Index > MA200 (long-only regime)
+      • Both conditions held for >= V11_STRONG_PERSIST_BARS (30 bars ≈ 6 weeks)
+
+    Trade-off: far fewer entries (only clear bull regimes), but should hold
+    up in out-of-sample testing because we only act when the regime is
+    UNAMBIGUOUSLY favorable.
+
+    Same per-market filter dispatch as v9/v10 (BEST_FILTERS_PER_MARKET).
+    """
+    p = MARKET_PARAMS.get(market, MARKET_PARAMS["US"])
+    df = df.sort_values("ts").reset_index(drop=True)
+    n = len(df)
+    if n < V10_STOCK_MA + 50:
+        return [], False
+
+    close = df["close"].to_numpy(dtype=float)
+    high = df["high"].to_numpy(dtype=float)
+    low = df["low"].to_numpy(dtype=float)
+    volume = (df["volume"].to_numpy(dtype=float)
+              if "volume" in df.columns else np.zeros(n))
+    ts = df["ts"].to_numpy()
+
+    s_close = pd.Series(close)
+    ma_fast = s_close.rolling(MA_FAST).mean().to_numpy()
+    ma_mid = s_close.rolling(MA_MID).mean().to_numpy()
+    ma_stock_long = s_close.rolling(V10_STOCK_MA).mean().to_numpy()
+    use_three = n >= MA_SLOW + SWING_LOOKBACK + 50
+    ma_slow = (s_close.rolling(MA_SLOW).mean().to_numpy()
+               if use_three else np.full(n, np.nan))
+
+    sh = pd.Series(high).rolling(SWING_LOOKBACK).max().shift(1).to_numpy()
+    sl = pd.Series(low).rolling(SWING_LOOKBACK).min().shift(1).to_numpy()
+
+    tr = _true_range(high, low, close)
+    atr = pd.Series(tr).rolling(ATR_PERIOD).mean().to_numpy()
+    atr_avg = pd.Series(atr).rolling(ATR_EXPANSION_LOOKBACK).mean().to_numpy()
+
+    ma_mid_lag = np.roll(ma_mid, TREND_SLOPE_PERIOD)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        slope = (ma_mid - ma_mid_lag) / ma_mid_lag / TREND_SLOPE_PERIOD
+    slope[: TREND_SLOPE_PERIOD] = np.nan
+
+    adx = compute_adx(high, low, close, period=ADX_PERIOD)
+    rsi_arr = compute_rsi(close, period=RSI_PERIOD)
+    _, _, macd_h = compute_macd(close)
+    has_volume = bool((volume > 0).any())
+    obv = compute_obv(close, volume) if has_volume else np.zeros(n)
+    obv_ma = (pd.Series(obv).rolling(OBV_MA_PERIOD).mean().to_numpy()
+              if has_volume else np.full(n, np.nan))
+    mfi_arr = (compute_mfi(high, low, close, volume) if has_volume
+               else np.full(n, np.nan))
+    cci_arr = compute_cci(high, low, close)
+    kdj_k, kdj_d, _ = compute_kdj(high, low, close)
+
+    vol_avg = (pd.Series(volume).rolling(20).mean().to_numpy()
+               if has_volume else np.full(n, np.nan))
+
+    weekly_ma_s, weekly_ma_l = compute_weekly_alignment(df)
+    has_weekly = weekly_ma_s is not None
+    # v11: strict strong-regime gate replaces v10's persistent gate.
+    strong_regime = _strong_regime_for_market(market, df)
+
+    if market == "CN":
+        cn_long_ok, cn_short_ok = _align_cn_master(df)
+    else:
+        cn_long_ok = np.ones(n, dtype=bool)
+        cn_short_ok = np.ones(n, dtype=bool)
+
+    filters = BEST_FILTERS_PER_MARKET.get(market, frozenset())
+    use_macd = "macd" in filters
+    use_rsi = "rsi" in filters
+    use_obv = "obv" in filters
+    use_atrx = "atr_exp" in filters
+    use_mfi = "mfi" in filters
+    use_cci = "cci" in filters
+    use_kdj = "kdj" in filters
+
+    warmup = (MA_SLOW if use_three else MA_MID) + SWING_LOOKBACK + TREND_SLOPE_PERIOD + 1
+    warmup = max(warmup, V10_STOCK_MA + 5)
+    if warmup >= n:
+        return [], False
+
+    trades: list[Trade] = []
+    state = "flat"
+    legs: list[tuple] = []
+    extreme = 0.0
+    init_stop = 0.0
+    using_trail = False
+    consec_losses = 0
+    cooldown_until = 0
+
+    for i in range(warmup, n):
+        c = close[i]; a = atr[i]
+        if not np.isfinite(a) or a <= 0:
+            continue
+
+        f, m, sm = ma_fast[i], ma_mid[i], slope[i]
+        adx_i = adx[i]
+        sl_ma = ma_slow[i] if use_three else None
+        stock_long_ma = ma_stock_long[i]
+
+        adx_ok = np.isfinite(adx_i) and adx_i > p["adx_min"]
+        slope_up = np.isfinite(sm) and sm > p["slope_min"]
+        slope_dn = np.isfinite(sm) and sm < -p["slope_min"]
+
+        if has_weekly:
+            ws, wl = weekly_ma_s[i], weekly_ma_l[i]
+            weekly_up = np.isfinite(ws) and np.isfinite(wl) and ws > wl
+            weekly_dn = np.isfinite(ws) and np.isfinite(wl) and ws < wl
+        else:
+            weekly_up = weekly_dn = True
+
+        # v11 GATE: strong-regime only.
+        regime_strong = bool(strong_regime[i])
+        three_up = (sl_ma is not None and m > sl_ma) if use_three else True
+        three_dn = (sl_ma is not None and m < sl_ma) if use_three else True
+        stock_uptrend = np.isfinite(stock_long_ma) and c > stock_long_ma
+        stock_downtrend = np.isfinite(stock_long_ma) and c < stock_long_ma
+
+        cn_long = bool(cn_long_ok[i])
+        cn_short = bool(cn_short_ok[i])
+
+        macd_up = (not use_macd) or (np.isfinite(macd_h[i]) and macd_h[i] > 0)
+        macd_dn = (not use_macd) or (np.isfinite(macd_h[i]) and macd_h[i] < 0)
+        rsi_up = ((not use_rsi)
+                  or (np.isfinite(rsi_arr[i])
+                      and RSI_LONG_MIN <= rsi_arr[i] <= RSI_LONG_MAX))
+        rsi_dn = ((not use_rsi)
+                  or (np.isfinite(rsi_arr[i])
+                      and RSI_SHORT_MIN <= rsi_arr[i] <= RSI_SHORT_MAX))
+        obv_up = ((not use_obv) or (not has_volume)
+                  or (np.isfinite(obv_ma[i]) and obv[i] > obv_ma[i]))
+        obv_dn = ((not use_obv) or (not has_volume)
+                  or (np.isfinite(obv_ma[i]) and obv[i] < obv_ma[i]))
+        atrx = ((not use_atrx)
+                or (np.isfinite(atr_avg[i]) and atr_avg[i] > 0
+                    and a > atr_avg[i] * ATR_EXPANSION_MULT))
+        mfi_up = ((not use_mfi) or (not has_volume)
+                  or (np.isfinite(mfi_arr[i])
+                      and MFI_LONG_MIN <= mfi_arr[i] <= MFI_LONG_MAX))
+        mfi_dn = ((not use_mfi) or (not has_volume)
+                  or (np.isfinite(mfi_arr[i])
+                      and MFI_SHORT_MIN <= mfi_arr[i] <= MFI_SHORT_MAX))
+        cci_up = ((not use_cci)
+                  or (np.isfinite(cci_arr[i]) and cci_arr[i] > CCI_LONG_MIN))
+        cci_dn = ((not use_cci)
+                  or (np.isfinite(cci_arr[i]) and cci_arr[i] < CCI_SHORT_MAX))
+        kdj_up = ((not use_kdj)
+                  or (np.isfinite(kdj_k[i]) and np.isfinite(kdj_d[i])
+                      and kdj_k[i] > KDJ_LONG_MIN and kdj_k[i] > kdj_d[i]))
+        kdj_dn = ((not use_kdj)
+                  or (np.isfinite(kdj_k[i]) and np.isfinite(kdj_d[i])
+                      and kdj_k[i] < KDJ_SHORT_MAX and kdj_k[i] < kdj_d[i]))
+
+        confluence_up = macd_up and rsi_up and obv_up and atrx and mfi_up and cci_up and kdj_up
+        confluence_dn = macd_dn and rsi_dn and obv_dn and atrx and mfi_dn and cci_dn and kdj_dn
+
+        # v11: only trade longs in strong bull regime; shorts disabled
+        # (V11_REQUIRE_INDEX_ABOVE_MA200 means we never identify a "strong bear regime").
+        trend_up = (f > m and slope_up and adx_ok and weekly_up
+                    and regime_strong and three_up and confluence_up
+                    and cn_long and stock_uptrend)
+        trend_dn = (f < m and slope_dn and adx_ok and weekly_dn
+                    and (not V11_REQUIRE_INDEX_ABOVE_MA200) and regime_strong
+                    and three_dn and confluence_dn
+                    and cn_short and stock_downtrend)
+
+        bo_up = c > sh[i] + p["atr_buffer"] * a
+        bo_dn = c < sl[i] - p["atr_buffer"] * a
+
+        if has_volume and np.isfinite(vol_avg[i]) and vol_avg[i] > 0:
+            vol_ok = volume[i] >= vol_avg[i] * p["vol_confirm_mult"]
+        else:
+            vol_ok = True
+
+        in_cd = i < cooldown_until
+
+        if state == "flat":
+            if in_cd:
+                continue
+            if trend_up and bo_up and vol_ok:
+                state = "long"
+                stop_d = p["init_stop_atr"] * a
+                hard_stop = c * (1.0 - PCT_HARD_STOP)
+                init_stop = max(c - stop_d, hard_stop)
+                stop_d = c - init_stop
+                legs = [(ts[i], c, stop_d)]
+                extreme = high[i]
+                using_trail = False
+            elif trend_dn and bo_dn and vol_ok:
+                state = "short"
+                stop_d = p["init_stop_atr"] * a
+                hard_stop = c * (1.0 + PCT_HARD_STOP)
+                init_stop = min(c + stop_d, hard_stop)
+                stop_d = init_stop - c
+                legs = [(ts[i], c, stop_d)]
+                extreme = low[i]
+                using_trail = False
+            continue
+
+        if state == "long":
+            extreme = max(extreme, high[i])
+            first = legs[0][1]
+            hard_floor = first * (1.0 - PCT_HARD_STOP)
+            if not using_trail and (c - first) >= p["trail_activate_atr"] * a:
+                using_trail = True
+            if (p["pyramid"] and len(legs) <= PYRAMID_MAX_ADDS and bo_up
+                    and (c - first) >= p["pyramid_profit_atr"] * a):
+                legs.append((ts[i], c, p["init_stop_atr"] * a))
+            if using_trail:
+                trail = extreme - p["trail_atr"] * a
+                exit_long = (c < trail and c < m) or c < hard_floor
+            else:
+                exit_long = c < init_stop or c < hard_floor
+            if exit_long:
+                won = (c - first) > 0
+                for et, ep, sd in legs:
+                    trades.append(Trade("long", et, ep, ts[i], c, sd))
+                state = "flat"; legs = []; using_trail = False
+                consec_losses = 0 if won else consec_losses + 1
+                if (p["cooldown_after_losses"] > 0
+                        and consec_losses >= p["cooldown_after_losses"]):
+                    cooldown_until = i + p["cooldown_bars"]
+                    consec_losses = 0
+            continue
+
+        # short
+        extreme = min(extreme, low[i])
+        first = legs[0][1]
+        hard_ceil = first * (1.0 + PCT_HARD_STOP)
+        if not using_trail and (first - c) >= p["trail_activate_atr"] * a:
+            using_trail = True
+        if (p["pyramid"] and len(legs) <= PYRAMID_MAX_ADDS and bo_dn
+                and (first - c) >= p["pyramid_profit_atr"] * a):
+            legs.append((ts[i], c, p["init_stop_atr"] * a))
+        if using_trail:
+            trail = extreme + p["trail_atr"] * a
+            exit_short = (c > trail and c > m) or c > hard_ceil
+        else:
+            exit_short = c > init_stop or c > hard_ceil
+        if exit_short:
+            won = (first - c) > 0
+            for et, ep, sd in legs:
+                trades.append(Trade("short", et, ep, ts[i], c, sd))
+            state = "flat"; legs = []; using_trail = False
+            consec_losses = 0 if won else consec_losses + 1
+            if (p["cooldown_after_losses"] > 0
+                    and consec_losses >= p["cooldown_after_losses"]):
+                cooldown_until = i + p["cooldown_bars"]
+                consec_losses = 0
+
+    if state in ("long", "short"):
+        for et, ep, sd in legs:
+            trades.append(Trade(state, et, ep, ts[-1], close[-1], sd))
+    return trades, use_three
+
+
 def run_market(market: str, tickers, fetch_fn,
                three_level: bool = USE_THREE_LEVEL_DEFAULT,
                strategy: str = "v1",
@@ -2537,12 +3242,25 @@ def run_market(market: str, tickers, fetch_fn,
     out: list[TickerResult] = []
     # Pre-warm the per-market regime cache once for v4/v5 (so all 20 stocks of
     # this market reuse the same index-data computation).
-    if strategy in ("v4", "v5", "v6", "v7", "v8"):
+    if strategy in ("v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11"):
         get_market_regime(market)
-    if strategy == "v8" and market == "CN":
-        get_cn_master_state()  # warm CN-specific state
+    if strategy in ("v8", "v9", "v10", "v11") and market == "CN":
+        get_cn_master_state()
+    # v9 = per-market filter dispatch using v8 engine
+    if strategy == "v9":
+        v6_filters = BEST_FILTERS_PER_MARKET.get(market, frozenset())
+        LOG.info("[%s] v9 dispatch: using filters=%s",
+                 market, sorted(v6_filters) or "[]")
+    if strategy in ("v10", "v11"):
+        v6_filters = BEST_FILTERS_PER_MARKET.get(market, frozenset())
+        LOG.info("[%s] %s dispatch: filters=%s + extra gates",
+                 market, strategy, sorted(v6_filters) or "[]")
     for t, df in data.items():
-        if strategy == "v8":
+        if strategy == "v11":
+            trades, use3 = backtest_v11(df, market)
+        elif strategy == "v10":
+            trades, use3 = backtest_v10(df, market)
+        elif strategy in ("v8", "v9"):
             trades, use3 = backtest_v8(df, market, filters=v6_filters)
         elif strategy == "v7":
             trades, use3 = backtest_v7(df, market, filters=v6_filters)
@@ -2604,12 +3322,265 @@ def aggregate(results: list[TickerResult], label: str) -> None:
         print(f"  Total R earned:         {sum_r:+.2f} R")
         print(f"  Avg R per trade:        {avg_r:+.3f} R")
 
+    # === Stability metrics — what matters for "stable profit" ===
+    s = _summary(results)
+    print(f"  Avg per-ticker max DD:  {s['avg_max_drawdown']:>+7.2%}  (avg of each ticker's peak-to-trough)")
+    print(f"  Worst single ticker:    {s['worst_ticker_net']:>+7.2%}  (floor risk per holding)")
+    print(f"  Longest loss streak:    {s['longest_loss_streak']:>3} consecutive losing trades (chrono)")
+    print(f"  Sharpe-like (per-trade):{s['sharpe_like']:>+7.2f}")
+    print(f"  Profitable tickers:     {s['pct_profitable_tickers']:>7.1%}")
+    if s['profit_factor'] != float("inf"):
+        print(f"  Profit factor:          {s['profit_factor']:>7.2f}")
+    else:
+        print(f"  Profit factor:          inf  (no losing trades)")
+
+    # Year-by-year breakdown — true "consistent profit" check.
+    yearly = _yearly_breakdown(results)
+    if yearly:
+        print(f"  --- Yearly breakdown (each year stable?) ---")
+        for y in sorted(yearly.keys()):
+            yi = yearly[y]
+            pf_str = f"{yi['pf']:>5.2f}" if yi['pf'] != float("inf") else "  inf"
+            tag = "✓" if yi["net"] > 0 else "✗"
+            print(f"    {y} {tag}: {yi['n']:>4} trades  wr={yi['wr']:>5.1%}  "
+                  f"net={yi['net']:>+8.2%}  PF={pf_str}")
+
+
+def _yearly_breakdown(results: list[TickerResult]) -> dict[int, dict]:
+    """Group all trades by entry-year, return per-year stats.
+
+    Critical for true 'stable profit' assessment — a strategy that wins +500%
+    overall but loses in 2 of 3 years isn't stable; it's just lucky one year.
+    """
+    by_year: dict[int, list[float]] = {}
+    for r in results:
+        for t in r.trades:
+            y = pd.Timestamp(t.entry_time).year
+            by_year.setdefault(y, []).append(t.net_return)
+    out = {}
+    for y, rets in by_year.items():
+        wins = [r for r in rets if r > 0]
+        losses = [r for r in rets if r <= 0]
+        out[y] = {
+            "n": len(rets),
+            "wr": len(wins) / len(rets) if rets else 0.0,
+            "net": sum(rets),
+            "pf": (sum(wins) / -sum(losses)) if losses and sum(losses) < 0 else float("inf"),
+        }
+    return out
+
+
+def _max_drawdown(returns: list[float]) -> float:
+    """Max peak-to-trough drawdown of cumulative-return curve.
+    Returns absolute value (positive number = drawdown size)."""
+    if not returns:
+        return 0.0
+    cum = 0.0
+    peak = 0.0
+    max_dd = 0.0
+    for r in returns:
+        cum += r
+        if cum > peak:
+            peak = cum
+        dd = peak - cum
+        if dd > max_dd:
+            max_dd = dd
+    return max_dd
+
+
+def _longest_loss_streak(returns: list[float]) -> int:
+    """Longest run of consecutive losing trades."""
+    if not returns:
+        return 0
+    longest = 0
+    current = 0
+    for r in returns:
+        if r <= 0:
+            current += 1
+            if current > longest:
+                longest = current
+        else:
+            current = 0
+    return longest
+
+
+def _sharpe_like(returns: list[float]) -> float:
+    """Per-trade Sharpe approximation: mean / std × sqrt(N).
+    Treat each trade as one period (no time-weighting).
+    Only meaningful with N >= 5."""
+    n = len(returns)
+    if n < 2:
+        return 0.0
+    mean_r = sum(returns) / n
+    var_r = sum((r - mean_r) ** 2 for r in returns) / (n - 1)
+    std_r = var_r ** 0.5
+    if std_r == 0:
+        return 0.0
+    return (mean_r / std_r) * (n ** 0.5)
+
+
+def simulate_portfolio(strategies_results: dict[str, dict[str, list[TickerResult]]],
+                        weights: dict[str, float],
+                        ) -> dict:
+    """Combine multiple strategies into a single weighted portfolio.
+
+    `strategies_results[strat_name][market_label]` is a list of TickerResult
+    from running `strat_name` on that market. `weights[strat_name]` is the
+    capital allocation (must sum to 1.0).
+
+    Each trade contributes `weights[strat_name] * trade.net_return` to the
+    portfolio cumulative equity. Trades are merged in chronological order by
+    exit_time, allowing per-bar drawdown to be computed correctly across
+    strategies that may overlap in time.
+
+    Returns a dict with portfolio-level metrics (n_trades, net, pf, max_dd,
+    sharpe, longest_loss_streak, per-year breakdown).
+    """
+    if abs(sum(weights.values()) - 1.0) > 1e-6:
+        LOG.warning("Portfolio weights sum to %.4f, not 1.0", sum(weights.values()))
+
+    # Flatten: (exit_time, weighted_net_return, strat_name, year)
+    flat: list[tuple] = []
+    for strat_name, market_dict in strategies_results.items():
+        w = weights.get(strat_name, 0.0)
+        if w == 0.0:
+            continue
+        for results in market_dict.values():
+            for r in results:
+                for t in r.trades:
+                    et = pd.Timestamp(t.entry_time)
+                    xt = pd.Timestamp(t.exit_time)
+                    flat.append((xt, t.net_return * w, strat_name, et.year))
+    flat.sort(key=lambda x: x[0])
+
+    if not flat:
+        return {"n_trades": 0, "net": 0.0, "pf": 0.0, "max_dd": 0.0,
+                "sharpe": 0.0, "longest_loss_streak": 0, "yearly": {}}
+
+    weighted_returns = [r for _, r, _, _ in flat]
+    n = len(weighted_returns)
+
+    # Cumulative + drawdown.
+    cum = 0.0
+    peak = 0.0
+    max_dd = 0.0
+    for r in weighted_returns:
+        cum += r
+        if cum > peak:
+            peak = cum
+        dd = peak - cum
+        if dd > max_dd:
+            max_dd = dd
+
+    # Profit factor.
+    wins = [r for r in weighted_returns if r > 0]
+    losses = [r for r in weighted_returns if r <= 0]
+    pf = (sum(wins) / -sum(losses)) if losses and sum(losses) < 0 else float("inf")
+
+    # Sharpe-like.
+    mean_r = sum(weighted_returns) / n
+    var_r = sum((r - mean_r) ** 2 for r in weighted_returns) / max(n - 1, 1)
+    std_r = var_r ** 0.5
+    sharpe = (mean_r / std_r) * (n ** 0.5) if std_r > 0 else 0.0
+
+    # Loss streak.
+    streak = 0
+    longest = 0
+    for r in weighted_returns:
+        if r <= 0:
+            streak += 1
+            if streak > longest:
+                longest = streak
+        else:
+            streak = 0
+
+    # Per-year + per-strategy breakdown.
+    yearly: dict[int, dict] = {}
+    by_strat: dict[str, list[float]] = {}
+    for _, r, strat, year in flat:
+        yearly.setdefault(year, []).append(r)
+        by_strat.setdefault(strat, []).append(r)
+
+    yearly_stats = {}
+    for y, rets in yearly.items():
+        ws = [r for r in rets if r > 0]
+        ls = [r for r in rets if r <= 0]
+        yearly_stats[y] = {
+            "n": len(rets),
+            "net": sum(rets),
+            "pf": (sum(ws) / -sum(ls)) if ls and sum(ls) < 0 else float("inf"),
+        }
+
+    strat_stats = {}
+    for s, rets in by_strat.items():
+        ws = [r for r in rets if r > 0]
+        ls = [r for r in rets if r <= 0]
+        strat_stats[s] = {
+            "n": len(rets),
+            "net": sum(rets),
+            "pf": (sum(ws) / -sum(ls)) if ls and sum(ls) < 0 else float("inf"),
+        }
+
+    return {
+        "n_trades": n,
+        "net": sum(weighted_returns),
+        "pf": pf,
+        "max_dd": max_dd,
+        "sharpe": sharpe,
+        "longest_loss_streak": longest,
+        "yearly": yearly_stats,
+        "by_strategy": strat_stats,
+    }
+
+
+def print_portfolio_result(name: str, weights: dict[str, float], result: dict) -> None:
+    """Pretty-print a portfolio simulation result."""
+    fmt_pf = lambda v: f"{v:.2f}" if v != float("inf") else "  inf"
+    print(f"\n{'─' * 70}")
+    print(f"PORTFOLIO: {name}")
+    print(f"  weights = {dict(sorted(weights.items()))}")
+    print(f"{'─' * 70}")
+    print(f"  Total trades:        {result['n_trades']}")
+    print(f"  Net return:          {result['net']:+8.2%}")
+    print(f"  Profit factor:       {fmt_pf(result['pf']):>8}")
+    print(f"  Max drawdown:        {result['max_dd']:+8.2%}")
+    print(f"  Sharpe-like:         {result['sharpe']:+8.2f}")
+    print(f"  Longest loss streak: {result['longest_loss_streak']:>3}")
+    by_s = result.get("by_strategy", {})
+    if by_s:
+        print(f"  Per-strategy contribution:")
+        for s in sorted(by_s.keys()):
+            st = by_s[s]
+            print(f"    {s:<6} n={st['n']:>4}  net={st['net']:>+7.2%}  PF={fmt_pf(st['pf']):>5}")
+    yr = result.get("yearly", {})
+    if yr:
+        print(f"  Yearly stability:")
+        for y in sorted(yr.keys()):
+            yi = yr[y]
+            tag = "✓" if yi["net"] > 0 else "✗"
+            print(f"    {y} {tag}: n={yi['n']:>4}  net={yi['net']:>+7.2%}  PF={fmt_pf(yi['pf']):>5}")
+
 
 def _summary(results: list[TickerResult]) -> dict:
     n_trades = sum(r.n_trades for r in results)
     n_wins = sum(r.n_wins for r in results)
     wins = [t.net_return for r in results for t in r.trades if t.net_return > 0]
     losses = [t.net_return for r in results for t in r.trades if t.net_return <= 0]
+    # Time-ordered trade returns for streak / Sharpe computation.
+    all_trades = [t for r in results for t in r.trades]
+    all_trades.sort(key=lambda t: t.exit_time)
+    chrono_returns = [t.net_return for t in all_trades]
+    # Per-ticker drawdown (chronological per ticker, then averaged).
+    per_ticker_dds = []
+    per_ticker_nets = []
+    for r in results:
+        rs = sorted(r.trades, key=lambda t: t.exit_time)
+        dd = _max_drawdown([t.net_return for t in rs])
+        per_ticker_dds.append(dd)
+        per_ticker_nets.append(r.total_net)
+    avg_dd = (sum(per_ticker_dds) / len(per_ticker_dds)) if per_ticker_dds else 0.0
+    worst_ticker_net = min(per_ticker_nets) if per_ticker_nets else 0.0
+    profitable_tickers = sum(1 for n in per_ticker_nets if n > 0)
     return {
         "n_tickers": len(results),
         "n_trades": n_trades,
@@ -2620,6 +3591,12 @@ def _summary(results: list[TickerResult]) -> dict:
         "avg_win": (sum(wins) / len(wins)) if wins else 0.0,
         "avg_loss": (sum(losses) / len(losses)) if losses else 0.0,
         "profit_factor": (sum(wins) / -sum(losses)) if losses and sum(losses) < 0 else float("inf"),
+        # Stability metrics — what matters for "stable profit" not just total.
+        "avg_max_drawdown": avg_dd,
+        "worst_ticker_net": worst_ticker_net,
+        "longest_loss_streak": _longest_loss_streak(chrono_returns),
+        "sharpe_like": _sharpe_like(chrono_returns),
+        "pct_profitable_tickers": (profitable_tickers / len(results)) if results else 0.0,
     }
 
 
@@ -2629,7 +3606,6 @@ def print_comparison(*runs: tuple[str, dict]) -> None:
         return
     market_labels = list(runs[0][1].keys())
     fmt_pf = lambda v: f"{v:.2f}" if v != float("inf") else "inf"
-    name_w = max(len(n) for n, _ in runs) + 1
     width = 10 + 4 + (8 + 8 + 9 + 6) * len(runs) + 2
     print("\n" + "=" * width)
     hdr = f"{'市场':<10} {'tk':>3}"
@@ -2653,6 +3629,20 @@ def print_comparison(*runs: tuple[str, dict]) -> None:
     print("=" * width)
     print("  tk=tickers, trd=trades, wr=win rate, net=sum of per-ticker net returns,")
     print("  PF=profit factor (sum_wins / |sum_losses|)")
+
+    # Stability table — what matters for "stable profit".
+    print("\n  --- 稳定性指标（值越大越稳，DD/streak 越小越稳）---")
+    sblock = ("{:<22} " + " ".join("{:>10}" for _ in runs)).format
+    print(sblock("metric", *(n for n, _ in runs)))
+    for metric, fmt, label in [
+        ("pct_profitable_tickers", "{:>9.1%}", "%盈利票"),
+        ("avg_max_drawdown",       "{:>+9.2%}", "单票均回撤"),
+        ("worst_ticker_net",       "{:>+9.2%}", "最差单票"),
+        ("sharpe_like",            "{:>+9.2f}", "Sharpe-like"),
+        ("longest_loss_streak",    "{:>10}",    "最长连亏"),
+    ]:
+        vals = [fmt.format(sums_total[i][metric]) for i in range(len(runs))]
+        print(sblock(label, *vals))
 
 
 def per_ticker_table(results: list[TickerResult], label: str) -> None:
@@ -2681,10 +3671,16 @@ def main() -> int:
     parser.add_argument("--three-level", action="store_true",
                         help="enable K2 three-level filter (needs much more data)")
     parser.add_argument("--strategy",
-                        choices=["v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8"],
+                        choices=["v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8",
+                                 "v9", "v10", "v11"],
                         default="v1",
-                        help="v1..v7 as before; "
-                             "v8=v7-bb+MFI+CCI+KDJ+CN-master-switch")
+                        help="v1..v8 as before; "
+                             "v9=v8 + per-market optimal filter dispatch; "
+                             "v10=v9 + stock-MA200 + regime persist (10-bar); "
+                             "v11=v10 + STRICT regime gate (ADX>25 + above-MA200 "
+                             "for 30+ bars). Walk-forward-survivable config.")
+    parser.add_argument("--sample-size", type=int, default=SAMPLE_SIZE,
+                        help=f"Tickers sampled per market (default {SAMPLE_SIZE})")
     parser.add_argument("--filters", default="",
                         help="v6/v7/v8 filters: comma-separated subset. "
                              "v6: bb,macd,rsi. "
@@ -2692,7 +3688,15 @@ def main() -> int:
                              "v8: macd,rsi,obv,atr_exp,mfi,cci,kdj.")
     parser.add_argument("--grid", action="store_true",
                         help="grid search: try every subset of filter keys "
-                             "(v6=8 / v7=32 combos) and rank by profit factor")
+                             "(v6=8 / v7=32 / v8=128) and rank by profit factor")
+    parser.add_argument("--walk-forward", action="store_true",
+                        help="walk-forward: run grid, then for each market show "
+                             "train-year (2024) winners' out-of-sample (2025) PF. "
+                             "Filters that win in-sample but fail oos = overfit.")
+    parser.add_argument("--portfolio", action="store_true",
+                        help="multi-strategy portfolio simulation: combine "
+                             "v4/v9/v10/v11 with several weight schemes; "
+                             "report combined PF/DD/Sharpe per scheme.")
     parser.add_argument("--screen", action="store_true",
                         help="filter universe by analyst score (current snapshot, "
                              "look-ahead bias warning)")
@@ -2710,17 +3714,24 @@ def main() -> int:
     LOG.info("Data window: %d days @ %s bars", PERIOD_DAYS, INTERVAL)
 
     rng = random.Random(args.seed)
+    # Per-market sample size: cap each at its own universe size individually,
+    # so CN can be tested with 200 tickers while US/HK use their max (~105-110).
+    us_n = min(args.sample_size, len(US_UNIVERSE))
+    hk_n = min(args.sample_size, len(HK_UNIVERSE))
+    cn_n = min(args.sample_size, len(set(CN_UNIVERSE)))
+    LOG.info("Sample sizes — US=%d HK=%d CN=%d (requested=%d)",
+             us_n, hk_n, cn_n, args.sample_size)
     if args.screen:
         LOG.warning("--screen uses current analyst data on historical bars: "
                     "results are subject to look-ahead bias. Treat as illustration.")
-        us_pick = screen_universe("US", US_UNIVERSE, SAMPLE_SIZE)
-        hk_pick = screen_universe("HK", HK_UNIVERSE, SAMPLE_SIZE)
-        cn_pick = (screen_universe("CN", sorted(set(CN_UNIVERSE)), SAMPLE_SIZE)
+        us_pick = screen_universe("US", US_UNIVERSE, us_n)
+        hk_pick = screen_universe("HK", HK_UNIVERSE, hk_n)
+        cn_pick = (screen_universe("CN", sorted(set(CN_UNIVERSE)), cn_n)
                    if not args.no_cn else [])
     else:
-        us_pick = rng.sample(US_UNIVERSE, SAMPLE_SIZE)
-        hk_pick = rng.sample(HK_UNIVERSE, SAMPLE_SIZE)
-        cn_pick = rng.sample(sorted(set(CN_UNIVERSE)), SAMPLE_SIZE)
+        us_pick = rng.sample(US_UNIVERSE, us_n)
+        hk_pick = rng.sample(HK_UNIVERSE, hk_n)
+        cn_pick = rng.sample(sorted(set(CN_UNIVERSE)), cn_n)
 
     LOG.info("Cost model: commission=%.4f%% slippage=%.4f%% (round-trip=%.2f%%)",
              COMMISSION * 100, SLIPPAGE * 100, ROUND_TRIP_COST * 100)
@@ -2748,6 +3759,155 @@ def main() -> int:
                 v6_filters=v6_filters,
             ),
         }
+
+    if args.portfolio:
+        # Multi-strategy portfolio simulation.
+        # Run each strategy once, then combine with various weight schemes.
+        LOG.info("Portfolio simulation: running v4, v9, v10, v11 ...")
+        strats = ["v4", "v9", "v10", "v11"]
+        all_results: dict[str, dict[str, list[TickerResult]]] = {}
+        for s in strats:
+            LOG.info("  ... running %s", s)
+            all_results[s] = _run(s)
+
+        # Define weight schemes to test.
+        schemes: list[tuple[str, dict[str, float]]] = [
+            ("equal_4way (25/25/25/25)",
+             {"v4": 0.25, "v9": 0.25, "v10": 0.25, "v11": 0.25}),
+            ("v4_heavy (60/20/15/05)",
+             {"v4": 0.60, "v9": 0.20, "v10": 0.15, "v11": 0.05}),
+            ("balanced (40/30/20/10)",
+             {"v4": 0.40, "v9": 0.30, "v10": 0.20, "v11": 0.10}),
+            ("quality_tilt (20/20/30/30)",
+             {"v4": 0.20, "v9": 0.20, "v10": 0.30, "v11": 0.30}),
+            ("v11_heavy (10/15/25/50)",
+             {"v4": 0.10, "v9": 0.15, "v10": 0.25, "v11": 0.50}),
+            ("v10_v11_only (00/00/40/60)",
+             {"v4": 0.00, "v9": 0.00, "v10": 0.40, "v11": 0.60}),
+            ("pure_v11 (00/00/00/100)",
+             {"v4": 0.00, "v9": 0.00, "v10": 0.00, "v11": 1.00}),
+            ("pure_v4 (100/00/00/00)",
+             {"v4": 1.00, "v9": 0.00, "v10": 0.00, "v11": 0.00}),
+        ]
+
+        scheme_results = []
+        for name, w in schemes:
+            res = simulate_portfolio(all_results, w)
+            scheme_results.append((name, w, res))
+            print_portfolio_result(name, w, res)
+
+        # Final ranking table.
+        print("\n" + "=" * 90)
+        print("PORTFOLIO RANKING (by Sharpe-like, tie-break by PF)")
+        print("=" * 90)
+        scheme_results.sort(key=lambda x: (-x[2]["sharpe"], -x[2]["pf"]))
+        print(f"{'scheme':<32} {'net':>9} {'PF':>6} {'maxDD':>8} {'Sharpe':>7} {'streak':>7}")
+        print("-" * 90)
+        fmt_pf = lambda v: f"{v:.2f}" if v != float("inf") else " inf"
+        for name, w, res in scheme_results:
+            print(f"{name:<32} {res['net']:>+8.2%} {fmt_pf(res['pf']):>6} "
+                  f"{res['max_dd']:>+7.2%} {res['sharpe']:>+7.2f} "
+                  f"{res['longest_loss_streak']:>7}")
+        return 0
+
+    if args.walk_forward:
+        # Walk-forward: same grid as --grid, but instead of ranking by overall
+        # PF, we rank by TRAIN-YEAR PF and look up the same combo's TEST-YEAR PF.
+        # Filters that perform well in-sample but fail out-of-sample = overfit.
+        from itertools import combinations
+        if args.strategy == "v8":
+            keys = V8_FILTER_KEYS
+            wf_strategy = "v8"
+        elif args.strategy == "v7":
+            keys = V7_FILTER_KEYS
+            wf_strategy = "v7"
+        else:
+            keys = V6_FILTER_KEYS
+            wf_strategy = "v6"
+        all_subsets = [frozenset()]
+        for r in range(1, len(keys) + 1):
+            for combo in combinations(keys, r):
+                all_subsets.append(frozenset(combo))
+        LOG.info("Walk-forward: %d filter combos × %d markets",
+                 len(all_subsets), len(["US", "HK", "CN"]))
+
+        # Collect per-combo per-market per-year stats.
+        wf_data = []  # list of (label, market, year_stats_dict)
+        for filt in all_subsets:
+            label = (f"{wf_strategy}_"
+                     + ("_".join(sorted(filt)) if filt else "base"))
+            rd = _run(wf_strategy, v6_filters=filt)
+            for market_label, results in rd.items():
+                ys = _yearly_breakdown(results)
+                wf_data.append((label, market_label, ys))
+
+        # Train on 2024 → test on 2025: rank combos by 2024 PF, look at 2025.
+        train_year, test_year = 2024, 2025
+        markets = list(rd.keys())
+        print("\n" + "=" * 90)
+        print(f"WALK-FORWARD: train {train_year} → test {test_year}")
+        print("=" * 90)
+        for m in markets:
+            relevant = [(label, ys) for label, ml, ys in wf_data if ml == m]
+            scored = []
+            for label, ys in relevant:
+                tr = ys.get(train_year, {})
+                te = ys.get(test_year, {})
+                if not tr or tr.get("n", 0) < 3:
+                    continue
+                pf_tr = tr["pf"] if tr["pf"] != float("inf") else 99.99
+                pf_te = (te["pf"] if te.get("pf", 0) != float("inf")
+                         else 99.99) if te else 0.0
+                scored.append((pf_tr, label, tr, te))
+            scored.sort(reverse=True)
+            print(f"\n  [{m}] top 8 trained on {train_year} (rank by {train_year} PF):")
+            print(f"  {'combo':<32} {'tr_n':>4} {'tr_PF':>6} {'tr_net':>8} "
+                  f"{'te_n':>4} {'te_PF':>6} {'te_net':>8}  stable?")
+            for pf_tr, label, tr, te in scored[:8]:
+                te_n = te.get("n", 0) if te else 0
+                te_pf = te.get("pf", 0.0) if te else 0.0
+                te_net = te.get("net", 0.0) if te else 0.0
+                te_pf_s = (f"{te_pf:>6.2f}" if te_pf != float("inf")
+                           else "  inf ")
+                stable = "✓" if te_pf > 1.0 else "✗"
+                print(f"  {label:<32} {tr['n']:>4} {tr['pf']:>5.2f} "
+                      f"{tr['net']:>+7.2%} {te_n:>4} {te_pf_s} "
+                      f"{te_net:>+7.2%}  {stable}")
+            stable_combos = [s for s in scored if s[3] and s[3].get("pf", 0) > 1.0]
+            if stable_combos:
+                top_stable = stable_combos[0]
+                print(f"  → Best 2024-train + 2025-test stable: {top_stable[1]}")
+            else:
+                print(f"  → No 2024-trained combo stays positive in {test_year}")
+
+        # Also do reverse: train 2025, test 2026.
+        train_year, test_year = 2025, 2026
+        print("\n" + "=" * 90)
+        print(f"WALK-FORWARD: train {train_year} → test {test_year}")
+        print("=" * 90)
+        for m in markets:
+            relevant = [(label, ys) for label, ml, ys in wf_data if ml == m]
+            scored = []
+            for label, ys in relevant:
+                tr = ys.get(train_year, {})
+                te = ys.get(test_year, {})
+                if not tr or tr.get("n", 0) < 3:
+                    continue
+                pf_tr = tr["pf"] if tr["pf"] != float("inf") else 99.99
+                scored.append((pf_tr, label, tr, te))
+            scored.sort(reverse=True)
+            print(f"\n  [{m}] top 5 trained on {train_year}:")
+            for pf_tr, label, tr, te in scored[:5]:
+                te_n = te.get("n", 0) if te else 0
+                te_pf = te.get("pf", 0.0) if te else 0.0
+                te_net = te.get("net", 0.0) if te else 0.0
+                te_pf_s = (f"{te_pf:>6.2f}" if te_pf != float("inf")
+                           else "  inf ")
+                stable = "✓" if te_pf > 1.0 else "✗"
+                print(f"  {label:<32} tr_PF={tr['pf']:>5.2f} "
+                      f"tr_net={tr['net']:>+7.2%} | te_PF={te_pf_s} "
+                      f"te_net={te_net:>+7.2%}  {stable}")
+        return 0
 
     if args.grid:
         # Indicator-confluence grid. v7 has 32 combos, v6 has 8.
@@ -2807,19 +3967,19 @@ def main() -> int:
     if args.compare:
         LOG.info("Running v1 (baseline) ...")
         r1 = _run("v1")
-        LOG.info("Running v2 (ATR+slope+trail+pyramid) ...")
-        r2 = _run("v2")
-        LOG.info("Running v3 (v2+ADX+init-stop+per-market+cooldown+vol) ...")
-        r3 = _run("v3")
         LOG.info("Running v4 (v3+weekly-resonance+market-regime) ...")
         r4 = _run("v4")
-        LOG.info("Running v5 (v4+auto-3level+RSI-mean-reversion) ...")
-        r5 = _run("v5")
-        print_comparison(("v1", r1), ("v2", r2), ("v3", r3),
-                         ("v4", r4), ("v5", r5))
+        LOG.info("Running v9 (per-market dispatch) ...")
+        r9 = _run("v9")
+        LOG.info("Running v10 (v9 + stock-MA200 + regime-persist) ...")
+        r10 = _run("v10")
+        LOG.info("Running v11 (v10 + STRICT regime gate) ...")
+        r11 = _run("v11")
+        print_comparison(("v1", r1), ("v4", r4),
+                         ("v9", r9), ("v10", r10), ("v11", r11))
         if args.detail:
-            for label, results in r5.items():
-                per_ticker_table(results, f"{label} v5")
+            for label, results in r11.items():
+                per_ticker_table(results, f"{label} v11")
         return 0
 
     LOG.info("Strategy: %s", args.strategy)
